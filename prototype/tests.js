@@ -41,3 +41,11 @@ it('next() eats a character and returns it', () => {
   assert.equal(p.re, 'e(he|jd)*');
 });
 
+it('more() determines if there is any input left to process', () => {
+  const p = new Parser(re7);
+  assert.equal(p.more(), true);
+  p.next();
+  assert.equal(p.more(), true);
+  p.next();
+  assert.equal(p.more(), false);
+});

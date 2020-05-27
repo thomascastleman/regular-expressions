@@ -1,0 +1,14 @@
+{
+  "name": "regex-prototype",
+  "version": "1.0.0",
+  "description": "Prototype implementation of a regex engine",
+  "main": "main.js",
+  "scripts": {
+    "test": "mocha tests.js"
+  },
+  "author": "Thomas Castleman",
+  "license": "ISC",
+  "dependencies": {
+    "mocha": "^7.2.0"
+  }
+}

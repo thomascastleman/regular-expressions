@@ -3,7 +3,7 @@
 */
 
 /*
-  Here's the grammar we're going to use.
+  The grammar for the regular expressions we'll accept.
   Largely adapted from Matt Might's post: 
   http://matt.might.net/articles/parsing-regex-with-recursive-descent/
 
@@ -21,8 +21,10 @@
           | '\' <char>
           | '.'
           | '(' <regex> ')'
-          | '[' { <charset-factor> } ']'
-  
+          | '[' <charset-term> ']'
+
+  <charset-term> := { <charset-factor> }
+
   <charset-factor> := <char> '-' <char>
                     | <char>
 
@@ -92,39 +94,14 @@ class Parser {
 
   }
 
+  charset_term() {
+
+  }
+
   charset_factor() {
 
   }
 
 }
-
-class Union {
-  constructor(_left, _right) {
-    this.left = _left;
-    this.right = _right;
-  }
-}
-
-class Concat {
-  constructor(_first, _next) {
-    this.first = _first;
-    this.next = _next;
-  }
-}
-
-class Star {
-  constructor(_base) {
-    this.base = _base;
-  }
-}
-
-class Primitive {
-  constructor(_char) {
-    this.char = _char;
-  }
-}
-
-// "a(b|c)*"
-// const re = new Concat(new Primitive("a"), new Star(new Union("b", "c")));
 
 module.exports = Parser;

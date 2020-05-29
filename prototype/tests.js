@@ -3,20 +3,8 @@
 */
 
 const assert = require('assert');
-const globals = require('./globals.js');
 const Parser = require('./parser.js');
 const tokens = require('./tokens.js');
-
-
-/*  Example regular expression strings */
-const re1 = "a(b|c)d"
-const re2 = "f*re(he|jd)*"
-const re3 = "[A-Z0-4]*"
-const re4 = "x+"
-const re5 = "x?"
-const re6 = "."
-const re7 = ".*"
-const re8 = "(ab*c+d?.[0-9][xyz]*(uv|w))+"
 
 /*  Abbreviated constructors for tokens, which make 
     test data for parsing less tedious */
@@ -31,9 +19,61 @@ function char(c) { return new tokens.Character(c); }
 function dot() { return new tokens.Dot(); }
 function empty() { return new tokens.Empty(); }
 
+
+/*  #######################################################################
+    #------------------ Test control of the input stream -----------------#
+    ####################################################################### */
+
+/*  Example regular expression strings */
+const re1 = "a(b|c)d"
+const re2 = "f*re(he|jd)*"
+const re3 = "[A-Z0-4]*"
+const re4 = "x+"
+const re5 = "x?"
+
+it('peek() returns 0th char of regex', () => {
+  const p = new Parser(re1);
+  assert.equal(p.peek(), 'a');
+  const p2 = new Parser(re3);
+  assert.equal(p2.peek(), '[');
+});
+
+it('eat() shortens re by a char off the front', () => {
+  const p = new Parser(re4);
+  p.eat('x')
+  assert.equal(p.re, '+');
+  p.eat('+')
+  assert.equal(p.re, '');
+});
+
+it('next() eats a character and returns it', () => {
+  const p = new Parser(re2);
+  assert.equal(p.next(), 'f');
+  assert.equal(p.re, '*re(he|jd)*');
+
+  assert.equal(p.next(), '*');
+  assert.equal(p.re, 're(he|jd)*');
+
+  assert.equal(p.next(), 'r');
+  assert.equal(p.re, 'e(he|jd)*');
+});
+
+it('more() determines if there is any input left to process', () => {
+  const p = new Parser(re5);
+  assert.equal(p.more(), true);
+  p.next();
+  assert.equal(p.more(), true);
+  p.next();
+  assert.equal(p.more(), false);
+});
+
+
+/*  #######################################################################
+    #--------------------- Parsing basic expressions ---------------------# 
+    ####################################################################### */
+
 /*  Example basic regular expressions, to unit test each 
     token individually as best we can. */
-
 const basic_1 = "";
 const basic_parsed_1 = empty();
 
@@ -64,6 +104,60 @@ const basic_parsed_9 = range('f', 'm');
 const basic_10 = "[xyz]";
 const basic_parsed_10 = charseq(charseq(char('x'), char('y')), char('z'));
 
+it('basic: empty regex parsed correctly', () => {
+  const p = new Parser(basic_1);
+  assert.deepEqual(p.parse(), basic_parsed_1);
+});
+
+it('basic: literal character parsed correctly', () => {
+  const p = new Parser(basic_2);
+  assert.deepEqual(p.parse(), basic_parsed_2);
+});
+
+it('basic: . special character parsed correctly', () => {
+  const p = new Parser(basic_3);
+  assert.deepEqual(p.parse(), basic_parsed_3);
+});
+
+it('basic: simple union parsed correctly', () => {
+  const p = new Parser(basic_4);
+  assert.deepEqual(p.parse(), basic_parsed_4);
+});
+
+it('basic: Kleene star parsed correctly', () => {
+  const p = new Parser(basic_5);
+  assert.deepEqual(p.parse(), basic_parsed_5);
+});
+
+it('basic: + parsed correctly', () => {
+  const p = new Parser(basic_6);
+  assert.deepEqual(p.parse(), basic_parsed_6);
+});
+
+it('basic: ? parsed correctly', () => {
+  const p = new Parser(basic_7);
+  assert.deepEqual(p.parse(), basic_parsed_7);
+});
+
+it('basic: simple sequence parsed correctly', () => {
+  const p = new Parser(basic_8);
+  assert.deepEqual(p.parse(), basic_parsed_8);
+});
+
+it('basic: simple character range parsed correctly', () => {
+  const p = new Parser(basic_9);
+  assert.deepEqual(p.parse(), basic_parsed_9);
+});
+
+it('basic: character set parsed correctly', () => {
+  const p = new Parser(basic_10);
+  assert.deepEqual(p.parse(), basic_parsed_10);
+});
+
+
+/*  #######################################################################
+    #------------------ Parsing more complex expressions -----------------#
+    ####################################################################### */
 
 /*  More complex examples, with their parse trees,
     and desugared parse trees. For testing parsing in full. */
@@ -121,40 +215,28 @@ const sugar_parse_5 =
             char('x'),
             range('0', '9')),
           char('y')))));
-    
 
-it('peek() returns 0th char of regex', () => {
-  const p = new Parser(re1);
-  assert.equal(p.peek(), 'a');
-  const p2 = new Parser(re3);
-  assert.equal(p2.peek(), '[');
+it('complex: abcd parsed correctly', () => {
+  const p = new Parser(pre_parse_1);
+  assert.deepEqual(p.parse(), sugar_parse_1);
 });
 
-it('eat() shortens re by a char off the front', () => {
-  const p = new Parser(re4);
-  p.eat('x')
-  assert.equal(p.re, '+');
-  p.eat('+')
-  assert.equal(p.re, '');
+it('complex: xy|z parsed correctly', () => {
+  const p = new Parser(pre_parse_2);
+  assert.deepEqual(p.parse(), sugar_parse_2);
 });
 
-it('next() eats a character and returns it', () => {
-  const p = new Parser(re2);
-  assert.equal(p.next(), 'f');
-  assert.equal(p.re, '*re(he|jd)*');
-
-  assert.equal(p.next(), '*');
-  assert.equal(p.re, 're(he|jd)*');
-
-  assert.equal(p.next(), 'r');
-  assert.equal(p.re, 'e(he|jd)*');
+it('complex: x*y+z?.* parsed correctly', () => {
+  const p = new Parser(pre_parse_3);
+  assert.deepEqual(p.parse(), sugar_parse_3);
 });
 
-it('more() determines if there is any input left to process', () => {
-  const p = new Parser(re7);
-  assert.equal(p.more(), true);
-  p.next();
-  assert.equal(p.more(), true);
-  p.next();
-  assert.equal(p.more(), false);
+it('complex: [A-Zxy] parsed correctly', () => {
+  const p = new Parser(pre_parse_4);
+  assert.deepEqual(p.parse(), sugar_parse_4);
+});
+
+it('complex: ((a|b|cd)*[x0-9y]?)+ parsed correctly', () => {
+  const p = new Parser(pre_parse_5);
+  assert.deepEqual(p.parse(), sugar_parse_5);
 });

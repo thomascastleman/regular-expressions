@@ -2,6 +2,8 @@
   parser.js: Parser for our regular expression strings
 */
 
+const tokens = require('./tokens.js');
+
 /*
   The grammar for the regular expressions we'll accept.
   Largely adapted from Matt Might's post: 
@@ -39,7 +41,7 @@ class Parser {
 
   /*  Construct a parse tree for the stored regex */
   parse() {
-
+    return new tokens.Empty();
   }
 
 

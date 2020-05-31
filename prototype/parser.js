@@ -2,6 +2,7 @@
   parser.js: Parser for our regular expression strings
 */
 
+const globals = require('./globals.js');
 const tokens = require('./tokens.js');
 
 /*
@@ -41,7 +42,7 @@ class Parser {
 
   /*  Construct a parse tree for the stored regex */
   parse() {
-    return new tokens.Empty();
+    return this.regex();
   }
 
   /*  -> char
@@ -72,6 +73,19 @@ class Parser {
       Are there more chars in the input stream? */
   more() {
     return this.re.length > 0;
+  }
+
+  /*  char -> bool
+      Determine if a character matches one of the reserved characters
+      with special meanings */
+  is_special_char(c) {
+    return  c == '(' || c == ')' ||
+            c == '[' || c == ']' ||
+            c == '*' || 
+            c == '+' ||
+            c == '?' || 
+            c == '|' ||
+            c == '.';
   }
 
   /*
@@ -121,14 +135,38 @@ class Parser {
   /*  -> Regex
       Parses a full regular expression off the input stream. */
   regex() {
+    const left = this.term();   // parse a term
 
+    // finished parsing, return the single term
+    // (check bounds of rightmost term: eof and right paren)
+    if (!this.more() || this.peek() == ')') return left;  
+
+    // proceed parsing the righthand side of the union
+    this.eat('|');
+    const right = this.regex();
+    return new tokens.Union(left, right);
+    
   }
 
   /*  -> Term
       Parses a term off the input stream.
       A Term is a possibly empty sequence of Factors */
   term() {
+    let f = new tokens.Empty();
+    let next_f;
 
+    // while there are factors to be parsed (check boundaries of a term)
+    while (this.more() && this.peek() != '|' && this.peek() != ')') {
+      next_f = this.factor(); // parse a factor
+
+      if (f.type == globals.EMPTY) {
+        f = next_f;
+      } else {
+        f = new tokens.Sequence(f, next_f);
+      }
+    }
+
+    return f;
   }
 
   /*  -> Factor
@@ -136,7 +174,25 @@ class Parser {
       A factor is a Base that optionally has some unary 
       operator (*, +, ?) applied to it. */
   factor() {
+    const b = this.base();  // parse a base
 
+    // check the following char for unary operators
+    switch (this.peek()) {
+      case '*':
+        this.eat('*');
+        return new tokens.Star(b);
+
+      case '+':
+        this.eat('+');
+        return new tokens.Plus(b);
+
+      case '?':
+        this.eat('?');
+        return new tokens.Question(b);
+
+      default:
+        return b;
+    }
   }
 
   /*  -> Base
@@ -144,14 +200,57 @@ class Parser {
       Bases can be literals, the '.' char, another sub-expression,
       or a character set */
   base() {
+    switch (this.peek()) {
+      // escaped character
+      case '\\':
+        this.eat('\\');
+        return new tokens.Character(this.next());
 
+      // dot character
+      case '.':
+        this.eat('.');
+        return new tokens.Dot();
+
+      // sub-expression
+      case '(':
+        this.eat('(');
+        const r = this.regex();
+        this.eat(')');
+        return r;
+
+      // character set
+      case '[':
+        this.eat('[');
+        const t = this.charset_term();
+        this.eat(']');
+        return t;
+
+      // character literal
+      default:
+        const c = this.next();
+
+        if (this.is_special_char(c))
+          throw new Error(`Unexpected special character '${c}' with remaining '${this.re}'`);
+
+        return new tokens.Character(c);
+    }
   }
 
   /*  -> CharsetTerm
       Parses a CharsetTerm off the input stream.
-      These terms are enclosed in [] and represent character sets */
+      A CharsetTerm is any number of charset factors, enclosed 
+      in []. It represents a character set */
   charset_term() {
+    let f = this.charset_factor();
+    let next_f;
 
+    // while there are charset factors to parse
+    while (this.more() && this.peek() != ']') {
+      next_f = this.charset_factor();
+      f = new tokens.CharsetSequence(f, next_f);
+    }
+
+    return f;
   }
 
   /*  -> CharsetFactor
@@ -159,7 +258,16 @@ class Parser {
       This is a single character literal or a character range which
       is found within a character set */
   charset_factor() {
+    const first = this.next();
 
+    // if char range
+    if (this.peek() == '-') {
+      this.eat('-');
+      const last = this.next();
+      return new tokens.Range(first, last);
+    } else {
+      return new tokens.Character(first);
+    }
   }
 
 }

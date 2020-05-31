@@ -67,6 +67,23 @@ it('more() determines if there is any input left to process', () => {
   assert.equal(p.more(), false);
 });
 
+it('is_special_char() recognizes special characters correctly', () => {
+  const p = new Parser(re1);
+  assert.equal(p.is_special_char('('), true);
+  assert.equal(p.is_special_char(')'), true);
+  assert.equal(p.is_special_char('['), true);
+  assert.equal(p.is_special_char(']'), true);
+  assert.equal(p.is_special_char('*'), true);
+  assert.equal(p.is_special_char('+'), true);
+  assert.equal(p.is_special_char('?'), true);
+  assert.equal(p.is_special_char('|'), true);
+  assert.equal(p.is_special_char('.'), true);
+
+  assert.equal(p.is_special_char('a'), false);
+  assert.equal(p.is_special_char('#'), false);
+  assert.equal(p.is_special_char('G'), false);
+});
+
 
 /*  #######################################################################
     #--------------------- Parsing basic expressions ---------------------# 
@@ -114,7 +131,7 @@ it('basic: literal character parsed correctly', () => {
   assert.deepEqual(p.parse(), basic_parsed_2);
 });
 
-it('basic: . special character parsed correctly', () => {
+it('basic: . (dot) token parsed correctly', () => {
   const p = new Parser(basic_3);
   assert.deepEqual(p.parse(), basic_parsed_3);
 });

@@ -4,27 +4,6 @@
 
 const globals = require('./globals.js');
 
-/*
-
-  A Literal is a Unicode character literal
-
-  A CharsetTerm is one of:
-    - Character(Literal)
-    - Range(Literal, Literal)
-
-  A Regex is one of:
-    - Union(Regex, Regex)
-    - Sequence(Regex, Regex)
-    - Star(Regex)
-    - Plus(Regex)
-    - Question(Regex)
-    - CharsetSequence(CharsetTerm, CharsetTerm)
-    - Character(Literal)
-    - Dot()
-    - Empty()
-
-*/
-
 /*  Union of left and right terms
     i.e. <left>|<right> 
     concretely, "a|b" */

@@ -25,7 +25,7 @@ const tokens = require('./tokens.js');
           | '(' <regex> ')'
           | '[' <charset-term> ']'
 
-  <charset-term> := { <charset-factor> }
+  <charset-term> := <charset-factor> { <charset-factor> }
 
   <charset-factor> := <char> '-' <char>
                     | <char>
@@ -43,9 +43,6 @@ class Parser {
   parse() {
     return new tokens.Empty();
   }
-
-
-  /* ------------ Navigating the input stream ------------ */
 
   /*  -> char
       Peek at the next character in the input stream */
@@ -77,29 +74,90 @@ class Parser {
     return this.re.length > 0;
   }
 
+  /*
 
-  /* ------------ Parsing each term ------------ */
+  ############################################################################
+  #---------------------------- Data Definitions ----------------------------#
+  #                                                                          #
+  #          See tokens.js for all tokens that can be instantiated.          #
+  #         The below definitions outline how these tokens fit together      #
+  #         and how they will be parsed in the below parsing functions.      #
+  #                                                                          #
+  ############################################################################
 
+  A Literal is a Unicode character literal
+
+  A Regex is one of:
+    - Union(Term, Regex)
+    - Term
+
+  A Term is one of:
+    - Empty()
+    - Factor
+    - Sequence(Factor, Factor)
+
+  A Factor is one of:
+    - Base
+    - Star(Base)
+    - Plus(Base)
+    - Question(Base)
+
+  A Base is one of:
+    - Character(Literal)
+    - Dot()
+    - Regex
+    - CharsetTerm
+
+  A CharsetTerm is one of:
+    - CharsetFactor
+    - CharsetSequence(CharsetFactor, CharsetFactor)
+
+  A CharsetFactor is one of:
+    - Character(Literal)
+    - Range(Literal, Literal)
+
+  */
+
+  /*  -> Regex
+      Parses a full regular expression off the input stream. */
   regex() {
 
   }
 
+  /*  -> Term
+      Parses a term off the input stream.
+      A Term is a possibly empty sequence of Factors */
   term() {
 
   }
 
+  /*  -> Factor
+      Parses a factor off the input stream.
+      A factor is a Base that optionally has some unary 
+      operator (*, +, ?) applied to it. */
   factor() {
 
   }
 
+  /*  -> Base
+      Parses a Base off the input stream.
+      Bases can be literals, the '.' char, another sub-expression,
+      or a character set */
   base() {
 
   }
 
+  /*  -> CharsetTerm
+      Parses a CharsetTerm off the input stream.
+      These terms are enclosed in [] and represent character sets */
   charset_term() {
 
   }
 
+  /*  -> CharsetFactor
+      Parses a CharsetFactor off the input stream.
+      This is a single character literal or a character range which
+      is found within a character set */
   charset_factor() {
 
   }

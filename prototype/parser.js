@@ -42,7 +42,13 @@ class Parser {
 
   /*  Construct a parse tree for the stored regex */
   parse() {
-    return this.regex();
+    const expr = this.regex();
+    
+    // if any part of input left unprocessed, signal error
+    if (this.re != '')
+      throw new Error(`Excess characters found after parse: '${this.re}'`);
+
+    return expr;
   }
 
   /*  -> char

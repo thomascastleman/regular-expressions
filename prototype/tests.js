@@ -48,6 +48,18 @@ describe('parser auxiliary functions', () => {
     assert.equal(p.re, '');
   });
 
+  it('eat() errors if given a char that doesn\'t match the next', () => {
+    const p = new Parser(re1);
+    assert.throws(() => {
+      p.eat('F');
+    });
+
+    const p2 = new Parser(re2);
+    assert.throws(() => {
+      p.eat('X');
+    });
+  });
+
   it('next() eats a character and returns it', () => {
     const p = new Parser(re2);
     assert.equal(p.next(), 'f');
@@ -127,6 +139,12 @@ const basic_parsed_10 = charseq(charseq(char('x'), char('y')), char('z'));
 const basic_11 = "((((AbCd))))";
 const basic_parsed_11 = seq(seq(seq(char('A'), char('b')), char('C')), char('d'));
 
+const basic_12 = "\\*";
+const basic_parsed_12 = char('*');
+
+const basic_13 = "((()))";
+const basic_parsed_13 = empty();
+
 describe('basic parsing', () => {
 
   it('empty regex parsed correctly', () => {
@@ -182,6 +200,16 @@ describe('basic parsing', () => {
   it('heavily nested expression parses correctly', () => {
     const p = new Parser(basic_11);
     assert.deepEqual(p.parse(), basic_parsed_11);
+  });
+
+  it('escaped special character parses as literal', () => {
+    const p = new Parser(basic_12);
+    assert.deepEqual(p.parse(), basic_parsed_12);
+  });
+
+  it('nested empty parentheses parses as empty token', () => {
+    const p = new Parser(basic_13);
+    assert.deepEqual(p.parse(), basic_parsed_13);
   });
 
 });
@@ -248,6 +276,16 @@ const sugar_parse_5 =
             range('0', '9')),
           char('y')))));
 
+const pre_parse_6 = "x(|y)z";
+const sugar_parse_6 = 
+  seq(
+    seq(
+      char('x'),
+      union(
+        empty(),
+        char('y'))),
+    char('z'));
+
 describe('parsing more complicated expressions', () => {
 
   it('abcd parsed correctly', () => {
@@ -275,4 +313,68 @@ describe('parsing more complicated expressions', () => {
     assert.deepEqual(p.parse(), sugar_parse_5);
   });
 
+  it('x(|y)z parsed correctly (union with empty)', () => {
+    const p = new Parser(pre_parse_6);
+    assert.deepEqual(p.parse(), sugar_parse_6);
+  });
+
+});
+
+
+/*  #######################################################################
+    #------------------------ Erroring expressions -----------------------#
+    ####################################################################### */
+
+const err_1 = "*";
+const err_2 = "+";
+const err_3 = "?";
+const err_4 = "((a|b)";     // unmatched left paren
+const err_5 = "x*y(z|v))";  // unmatched right paren
+const err_6 = ")";
+const err_7 = "(";
+const err_8 = "[A-Za-z]]";    // bracket out of place
+const err_9 = "a]b+c";        // bracket out of place
+const err_10 = "xyz*+";       // + out of place
+const err_11 = "abc(";        // paren out of place
+const err_12 = "+*?";         // unary operators applied to nothing
+const err_13 = "(((((()))))"  // this one is just fun
+
+describe('erroring expressions', () => {
+  it('lone unary operator fails to parse', () => {
+    const p1 = new Parser(err_1);
+    const p2 = new Parser(err_2);
+    const p3 = new Parser(err_3);
+
+    assert.throws(() => { p1.parse() });
+    assert.throws(() => { p2.parse() });
+    assert.throws(() => { p3.parse() });
+  });
+
+  it('mismatched parentheses fail to parse', () => {
+    const p1 = new Parser(err_4);
+    const p2 = new Parser(err_5);
+    const p3 = new Parser(err_6);
+    const p4 = new Parser(err_7);
+    const p5 = new Parser(err_13);
+
+    assert.throws(() => { p1.parse() });
+    assert.throws(() => { p2.parse() });
+    assert.throws(() => { p3.parse() });
+    assert.throws(() => { p4.parse() });
+    assert.throws(() => { p5.parse() });
+  });
+
+  it('out-of-place special character fails to parse', () => {
+    const p1 = new Parser(err_8);
+    const p2 = new Parser(err_9);
+    const p3 = new Parser(err_10);
+    const p4 = new Parser(err_11);
+    const p5 = new Parser(err_12);
+
+    assert.throws(() => { p1.parse() });
+    assert.throws(() => { p2.parse() });
+    assert.throws(() => { p3.parse() });
+    assert.throws(() => { p4.parse() });
+    assert.throws(() => { p5.parse() });
+  });
 });

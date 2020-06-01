@@ -1,10 +1,10 @@
 /*
-  tests.js: Unit testing
+  parser.test.js: Unit testing for regular expressions parser
 */
 
 const assert = require('assert');
-const Parser = require('./parser.js');
-const tokens = require('./tokens.js');
+const Parser = require('../parser.js');
+const tokens = require('../tokens.js');
 
 /*  Abbreviated constructors for tokens, which make 
     test data for parsing less tedious */

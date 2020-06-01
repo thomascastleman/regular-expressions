@@ -31,59 +31,62 @@ const re3 = "[A-Z0-4]*"
 const re4 = "x+"
 const re5 = "x?"
 
-it('peek() returns 0th char of regex', () => {
-  const p = new Parser(re1);
-  assert.equal(p.peek(), 'a');
-  const p2 = new Parser(re3);
-  assert.equal(p2.peek(), '[');
+describe('parser auxiliary functions', () => {
+
+  it('peek() returns 0th char of regex', () => {
+    const p = new Parser(re1);
+    assert.equal(p.peek(), 'a');
+    const p2 = new Parser(re3);
+    assert.equal(p2.peek(), '[');
+  });
+
+  it('eat() shortens re by a char off the front', () => {
+    const p = new Parser(re4);
+    p.eat('x')
+    assert.equal(p.re, '+');
+    p.eat('+')
+    assert.equal(p.re, '');
+  });
+
+  it('next() eats a character and returns it', () => {
+    const p = new Parser(re2);
+    assert.equal(p.next(), 'f');
+    assert.equal(p.re, '*re(he|jd)*');
+
+    assert.equal(p.next(), '*');
+    assert.equal(p.re, 're(he|jd)*');
+
+    assert.equal(p.next(), 'r');
+    assert.equal(p.re, 'e(he|jd)*');
+  });
+
+  it('more() determines if there is any input left to process', () => {
+    const p = new Parser(re5);
+    assert.equal(p.more(), true);
+    p.next();
+    assert.equal(p.more(), true);
+    p.next();
+    assert.equal(p.more(), false);
+  });
+
+  it('is_special_char() recognizes special characters correctly', () => {
+    const p = new Parser(re1);
+    assert.equal(p.is_special_char('('), true);
+    assert.equal(p.is_special_char(')'), true);
+    assert.equal(p.is_special_char('['), true);
+    assert.equal(p.is_special_char(']'), true);
+    assert.equal(p.is_special_char('*'), true);
+    assert.equal(p.is_special_char('+'), true);
+    assert.equal(p.is_special_char('?'), true);
+    assert.equal(p.is_special_char('|'), true);
+    assert.equal(p.is_special_char('.'), true);
+
+    assert.equal(p.is_special_char('a'), false);
+    assert.equal(p.is_special_char('#'), false);
+    assert.equal(p.is_special_char('G'), false);
+  });
+
 });
-
-it('eat() shortens re by a char off the front', () => {
-  const p = new Parser(re4);
-  p.eat('x')
-  assert.equal(p.re, '+');
-  p.eat('+')
-  assert.equal(p.re, '');
-});
-
-it('next() eats a character and returns it', () => {
-  const p = new Parser(re2);
-  assert.equal(p.next(), 'f');
-  assert.equal(p.re, '*re(he|jd)*');
-
-  assert.equal(p.next(), '*');
-  assert.equal(p.re, 're(he|jd)*');
-
-  assert.equal(p.next(), 'r');
-  assert.equal(p.re, 'e(he|jd)*');
-});
-
-it('more() determines if there is any input left to process', () => {
-  const p = new Parser(re5);
-  assert.equal(p.more(), true);
-  p.next();
-  assert.equal(p.more(), true);
-  p.next();
-  assert.equal(p.more(), false);
-});
-
-it('is_special_char() recognizes special characters correctly', () => {
-  const p = new Parser(re1);
-  assert.equal(p.is_special_char('('), true);
-  assert.equal(p.is_special_char(')'), true);
-  assert.equal(p.is_special_char('['), true);
-  assert.equal(p.is_special_char(']'), true);
-  assert.equal(p.is_special_char('*'), true);
-  assert.equal(p.is_special_char('+'), true);
-  assert.equal(p.is_special_char('?'), true);
-  assert.equal(p.is_special_char('|'), true);
-  assert.equal(p.is_special_char('.'), true);
-
-  assert.equal(p.is_special_char('a'), false);
-  assert.equal(p.is_special_char('#'), false);
-  assert.equal(p.is_special_char('G'), false);
-});
-
 
 /*  #######################################################################
     #--------------------- Parsing basic expressions ---------------------# 
@@ -121,54 +124,66 @@ const basic_parsed_9 = range('f', 'm');
 const basic_10 = "[xyz]";
 const basic_parsed_10 = charseq(charseq(char('x'), char('y')), char('z'));
 
-it('basic: empty regex parsed correctly', () => {
-  const p = new Parser(basic_1);
-  assert.deepEqual(p.parse(), basic_parsed_1);
-});
+const basic_11 = "((((AbCd))))";
+const basic_parsed_11 = seq(seq(seq(char('A'), char('b')), char('C')), char('d'));
 
-it('basic: literal character parsed correctly', () => {
-  const p = new Parser(basic_2);
-  assert.deepEqual(p.parse(), basic_parsed_2);
-});
+describe('basic parsing', () => {
 
-it('basic: . (dot) token parsed correctly', () => {
-  const p = new Parser(basic_3);
-  assert.deepEqual(p.parse(), basic_parsed_3);
-});
+  it('empty regex parsed correctly', () => {
+    const p = new Parser(basic_1);
+    assert.deepEqual(p.parse(), basic_parsed_1);
+  });
+  
+  it('literal character parsed correctly', () => {
+    const p = new Parser(basic_2);
+    assert.deepEqual(p.parse(), basic_parsed_2);
+  });
+  
+  it('. (dot) token parsed correctly', () => {
+    const p = new Parser(basic_3);
+    assert.deepEqual(p.parse(), basic_parsed_3);
+  });
+  
+  it('simple union parsed correctly', () => {
+    const p = new Parser(basic_4);
+    assert.deepEqual(p.parse(), basic_parsed_4);
+  });
+  
+  it('Kleene star parsed correctly', () => {
+    const p = new Parser(basic_5);
+    assert.deepEqual(p.parse(), basic_parsed_5);
+  });
+  
+  it('+ parsed correctly', () => {
+    const p = new Parser(basic_6);
+    assert.deepEqual(p.parse(), basic_parsed_6);
+  });
+  
+  it('? parsed correctly', () => {
+    const p = new Parser(basic_7);
+    assert.deepEqual(p.parse(), basic_parsed_7);
+  });
+  
+  it('simple sequence parsed correctly', () => {
+    const p = new Parser(basic_8);
+    assert.deepEqual(p.parse(), basic_parsed_8);
+  });
+  
+  it('simple character range parsed correctly', () => {
+    const p = new Parser(basic_9);
+    assert.deepEqual(p.parse(), basic_parsed_9);
+  });
+  
+  it('character set parsed correctly', () => {
+    const p = new Parser(basic_10);
+    assert.deepEqual(p.parse(), basic_parsed_10);
+  });
 
-it('basic: simple union parsed correctly', () => {
-  const p = new Parser(basic_4);
-  assert.deepEqual(p.parse(), basic_parsed_4);
-});
+  it('heavily nested expression parses correctly', () => {
+    const p = new Parser(basic_11);
+    assert.deepEqual(p.parse(), basic_parsed_11);
+  });
 
-it('basic: Kleene star parsed correctly', () => {
-  const p = new Parser(basic_5);
-  assert.deepEqual(p.parse(), basic_parsed_5);
-});
-
-it('basic: + parsed correctly', () => {
-  const p = new Parser(basic_6);
-  assert.deepEqual(p.parse(), basic_parsed_6);
-});
-
-it('basic: ? parsed correctly', () => {
-  const p = new Parser(basic_7);
-  assert.deepEqual(p.parse(), basic_parsed_7);
-});
-
-it('basic: simple sequence parsed correctly', () => {
-  const p = new Parser(basic_8);
-  assert.deepEqual(p.parse(), basic_parsed_8);
-});
-
-it('basic: simple character range parsed correctly', () => {
-  const p = new Parser(basic_9);
-  assert.deepEqual(p.parse(), basic_parsed_9);
-});
-
-it('basic: character set parsed correctly', () => {
-  const p = new Parser(basic_10);
-  assert.deepEqual(p.parse(), basic_parsed_10);
 });
 
 
@@ -233,27 +248,31 @@ const sugar_parse_5 =
             range('0', '9')),
           char('y')))));
 
-it('complex: abcd parsed correctly', () => {
-  const p = new Parser(pre_parse_1);
-  assert.deepEqual(p.parse(), sugar_parse_1);
-});
+describe('parsing more complicated expressions', () => {
 
-it('complex: xy|z parsed correctly', () => {
-  const p = new Parser(pre_parse_2);
-  assert.deepEqual(p.parse(), sugar_parse_2);
-});
+  it('abcd parsed correctly', () => {
+    const p = new Parser(pre_parse_1);
+    assert.deepEqual(p.parse(), sugar_parse_1);
+  });
 
-it('complex: x*y+z?.* parsed correctly', () => {
-  const p = new Parser(pre_parse_3);
-  assert.deepEqual(p.parse(), sugar_parse_3);
-});
+  it('xy|z parsed correctly', () => {
+    const p = new Parser(pre_parse_2);
+    assert.deepEqual(p.parse(), sugar_parse_2);
+  });
 
-it('complex: [A-Zxy] parsed correctly', () => {
-  const p = new Parser(pre_parse_4);
-  assert.deepEqual(p.parse(), sugar_parse_4);
-});
+  it('x*y+z?.* parsed correctly', () => {
+    const p = new Parser(pre_parse_3);
+    assert.deepEqual(p.parse(), sugar_parse_3);
+  });
 
-it('complex: ((a|b|cd)*[x0-9y]?)+ parsed correctly', () => {
-  const p = new Parser(pre_parse_5);
-  assert.deepEqual(p.parse(), sugar_parse_5);
+  it('[A-Zxy] parsed correctly', () => {
+    const p = new Parser(pre_parse_4);
+    assert.deepEqual(p.parse(), sugar_parse_4);
+  });
+
+  it('((a|b|cd)*[x0-9y]?)+ parsed correctly', () => {
+    const p = new Parser(pre_parse_5);
+    assert.deepEqual(p.parse(), sugar_parse_5);
+  });
+
 });

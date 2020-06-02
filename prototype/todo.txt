@@ -1,8 +1,5 @@
 To do.
 
-Basic Parsing:
-- update parser to use indexing instead of substrings. then improve all error messages
-
 Desugaring:
 - add desugaring examples
 - write desugaring

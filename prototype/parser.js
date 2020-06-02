@@ -49,19 +49,25 @@ const tokens = require('./tokens.js');
 */
 
 class Parser {
-  /*  _re : String
+  /*  String -> Parser
       Construct a parser for a given regular expression _re */
   constructor(_re) {
     this.re = _re;
+    this.index = 0;
   }
 
-  /*  Construct a parse tree for the stored regex */
+  /*  -> Regex
+      Construct a parse tree for the stored regex. Note: this parse
+      tree has not been desugared */
   parse() {
     const expr = this.regex();
     
     // if any part of input left unprocessed, signal error
-    if (this.re != '')
-      throw new Error(`Excess characters found after parse: '${this.re}'`);
+    if (this.more()) {
+      throw new Error(
+        `The following characters were unexpected: ` + 
+        `'${this.re.substring(this.index)}'`);
+    }
 
     return expr;
   }
@@ -69,16 +75,18 @@ class Parser {
   /*  -> char
       Peek at the next character in the input stream */
   peek() {
-    return this.re[0];
+    return this.re[this.index];
   }
 
   /*  c : char ->
       Consume the next character in the input stream */
   eat(c) {
     if (this.peek() == c) {
-      this.re = this.re.substring(1); // shift off the first char
+      this.index++;   // move along
     } else {
-      throw new Error(`Expected: ${c}, but got: ${this.peek()}`);
+      throw new Error(
+        `Expected: '${c}', but got: '${this.peek()}'` + 
+        ` at index ${this.index}`);
     }
   }
 
@@ -93,7 +101,7 @@ class Parser {
   /*  -> bool
       Are there more chars in the input stream? */
   more() {
-    return this.re.length > 0;
+    return this.index < this.re.length;
   }
 
   /*  char -> bool
@@ -199,7 +207,6 @@ class Parser {
     this.eat('|');
     const right = this.regex();
     return new tokens.Union(left, right);
-    
   }
 
   /*  -> Term
@@ -285,17 +292,18 @@ class Parser {
       default:
         const c = this.next();
 
-        if (this.is_special_char(c))
-          throw new Error(`Unexpected special character '${c}' with remaining '${this.re}'`);
+        /*  if any other special char shows up where a 
+            literal should be, it is unexpected */
+        if (this.is_special_char(c)) {
+          throw new Error(
+            `Unexpected special character '${c}' at index ${this.index}`);
+        }
 
         return new tokens.Character(c);
     }
   }
 
-  /*  -> char
-        | Digit
-        | Word
-        | Whitespace
+  /*  -> Escaped
       Parses an escape sequence off the input stream. Handles \d, \w, and \s
       as special character classes, otherwise returns the char after '\' */
   escaped() {
@@ -369,8 +377,11 @@ class Parser {
 
     const converted = parseInt(digits, 10);
 
-    if (isNaN(converted))
-      return new Error(`Expected an integer, but got: '${digits}'`);
+    if (isNaN(converted)) {
+      return new Error(
+        `Expected an integer, but got: '${digits}'` + 
+        ` around index ${this.index}`);
+    }
 
     return converted;
   }
@@ -398,9 +409,7 @@ class Parser {
       is found within a character set */
   charset_factor() {
     // check for escape sequence within the charset
-    if (this.peek() == '\\') {
-      return this.escaped();
-    }
+    if (this.peek() == '\\') return this.escaped();
 
     const first = this.next();
 

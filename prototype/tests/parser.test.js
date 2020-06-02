@@ -40,43 +40,39 @@ const re5 = "x?"
 
 describe('parser auxiliary functions', () => {
 
-  it('peek() returns 0th char of regex', () => {
+  it('peek() returns char of the regex at current index', () => {
     const p = new Parser(re1);
     assert.equal(p.peek(), 'a');
     const p2 = new Parser(re3);
     assert.equal(p2.peek(), '[');
   });
 
-  it('eat() shortens re by a char off the front', () => {
+  it('eat() increments the index up 1', () => {
     const p = new Parser(re4);
     p.eat('x')
-    assert.equal(p.re, '+');
+    assert.equal(p.index, 1);
     p.eat('+')
-    assert.equal(p.re, '');
+    assert.equal(p.index, 2);
   });
 
   it('eat() errors if given a char that doesn\'t match the next', () => {
     const p = new Parser(re1);
-    assert.throws(() => {
-      p.eat('F');
-    });
+    assert.throws(() => { p.eat('F') });
 
     const p2 = new Parser(re2);
-    assert.throws(() => {
-      p.eat('X');
-    });
+    assert.throws(() => { p.eat('X') });
   });
 
-  it('next() eats a character and returns it', () => {
+  it('next() eats a character and returns it (increments index)', () => {
     const p = new Parser(re2);
     assert.equal(p.next(), 'f');
-    assert.equal(p.re, '*re(he|jd)*');
+    assert.equal(p.index, 1);
 
     assert.equal(p.next(), '*');
-    assert.equal(p.re, 're(he|jd)*');
+    assert.equal(p.index, 2);
 
     assert.equal(p.next(), 'r');
-    assert.equal(p.re, 'e(he|jd)*');
+    assert.equal(p.index, 3);
   });
 
   it('more() determines if there is any input left to process', () => {

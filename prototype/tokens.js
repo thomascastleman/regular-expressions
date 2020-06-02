@@ -113,11 +113,11 @@ class Digit {
   }
 }
 
-/*  Represents any alphanumeric character, plus "_" (underscore).
+/*  Represents any alphanumeric "word" character, plus "_" (underscore).
     concretely, "\w" or "[A-Za-z0-9_]"  */
-class Alphanumeric {
+class Word {
   constructor() {
-    this.type = globals.ALPHANUMERIC;
+    this.type = globals.WORD;
   }
 }
 
@@ -132,9 +132,9 @@ class Whitespace {
 /*  {n} which demands exactly n occurrences of the
     preceding base. 
     concretely, "a{4}" */
-class ExactCount {
+class ExactQuantifier {
   constructor(_base, _count) {
-    this.type = globals.EXACT_COUNT;
+    this.type = globals.EXACT_QUANTIFIER;
     this.base = _base;
     this.count = _count;
   }
@@ -143,9 +143,9 @@ class ExactCount {
 /*  {min, max} which demands anywhere between min and max 
     (inclusive) occurrences of the preceding base
     concretely, "a{3,6}" */
-class RangeCount {
+class RangeQuantifier {
   constructor(_base, _min, _max) {
-    this.type = globals.RANGE_COUNT;
+    this.type = globals.RANGE_QUANTIFIER;
     this.base = _base;
     this.min = _min;
     this.max = _max;
@@ -155,9 +155,9 @@ class RangeCount {
 /*  {min,} which demands at least min occurrences of the preceding
     base, but any amount over that also matches. 
     concretely, "a{5,}" */
-class AtLeast {
+class AtLeastQuantifier {
   constructor(_base, _min) {
-    this.type = globals.AT_LEAST;
+    this.type = globals.AT_LEAST_QUANTIFIER;
     this.base = _base;
     this.min = _min;
   }
@@ -166,9 +166,9 @@ class AtLeast {
 /*  {,max} which demands at most max occurrences of the preceding
     base, but any amount below also matches.
     concretely, "a{,7}" */
-class AtMost {
+class AtMostQuantifier {
   constructor(_base, _max) {
-    this.type = globals.AT_MOST;
+    this.type = globals.AT_MOST_QUANTIFIER;
     this.base = _base;
     this.max = _max;
   }
@@ -186,10 +186,10 @@ module.exports = {
   Dot,
   Empty,
   Digit,
-  Alphanumeric,
+  Word,
   Whitespace,
-  ExactCount,
-  RangeCount,
-  AtLeast,
-  AtMost
+  ExactQuantifier,
+  RangeQuantifier,
+  AtLeastQuantifier,
+  AtMostQuantifier
 }

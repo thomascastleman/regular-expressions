@@ -22,29 +22,29 @@ const tokens = require('./tokens.js');
   <unary-op> := '*'
               | '+'
               | '?'
-              | <count>
+              | <quantifier>
 
   <base> := <char>
-          | <built-in>
+          | <char-class>
           | '.'
           | '\' <char>
           | '(' <regex> ')'
           | '[' <charset-term> ']'
 
-  <count> :=  '{' <number> '}'
-            | '{' <number> ',' <number> '}'
-            | '{' <number> ',}'
-            | '{,' <number> '}'
+  <quantifier> := '{' <number> '}'
+                | '{' <number> ',' <number> '}'
+                | '{' <number> ',}'
+                | '{,' <number> '}'
 
   <charset-term> := <charset-factor> { <charset-factor> }
 
   <charset-factor> := <char> '-' <char>
                     | <char>
-                    | <built-in>
+                    | <char-class>
 
-  <built-in> := '\d'
-              | '\w'
-              | '\s'
+  <char-class> := '\d'
+                | '\w'
+                | '\s'
 
 */
 
@@ -139,19 +139,23 @@ class Parser {
     - Star(Base)
     - Plus(Base)
     - Question(Base)
-    - ExactCount(Base, Number)
-    - RangeCount(Base, Number, Number)
-    - AtLeast(Base, Number)
-    - AtMost(Base, Number)
+    - ExactQuantifier(Base, Number)
+    - RangeQuantifier(Base, Number, Number)
+    - AtLeastQuantifier(Base, Number)
+    - AtMostQuantifier(Base, Number)
 
   A Base is one of:
-    - Digit()
-    - Alphanumeric()
-    - Whitespace()
+    - Escaped
     - Dot()
     - Character(Literal)
     - Regex
     - CharsetTerm
+
+  An Escaped is one of:
+    - Character(Literal)
+    - Digit()
+    - Word()
+    - Whitespace()
 
   A CharsetTerm is one of:
     - CharsetFactor
@@ -160,9 +164,7 @@ class Parser {
   A CharsetFactor is one of:
     - Character(Literal)
     - Range(Literal, Literal)
-    - Digit()
-    - Alphanumeric()
-    - Whitespace()
+    - Escaped
 
   */
 
@@ -232,7 +234,7 @@ class Parser {
   /*  -> Base
       Parses a Base off the input stream.
       Bases can be literals, the '.' char, another sub-expression,
-      a character set, or a selector like \d */
+      a character set, or a character class like \d */
   base() {
     switch (this.peek()) {
       // escaped character
@@ -271,21 +273,21 @@ class Parser {
 
   /*  -> char
         | Digit
-        | Alphanumeric
+        | Word
         | Whitespace
       Parses an escape sequence off the input stream. Handles \d, \w, and \s
-      as special selectors, otherwise returns the char after '\' */
+      as special character classes, otherwise returns the char after '\' */
   escaped() {
     this.eat('\\');
     const esc = this.next();
 
-    // determine if this is a special selector or just an escaped literal
+    // determine if this is a char class or just an escaped literal
     switch (esc) {
       case 'd':
         return new tokens.Digit();
 
       case 'w':
-        return new tokens.Alphanumeric();
+        return new tokens.Word();
 
       case 's':
         return new tokens.Whitespace();

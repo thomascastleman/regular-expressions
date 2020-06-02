@@ -19,12 +19,12 @@ function char(c) { return new tokens.Character(c) }
 function dot() { return new tokens.Dot() }
 function empty() { return new tokens.Empty() }
 function digit() { return new tokens.Digit() }
-function alphanum() { return new tokens.Alphanumeric() }
+function word() { return new tokens.Word() }
 function whitespace() { return new tokens.Whitespace() }
-function exact(b, c) { return new tokens.ExactCount(b, c) }
-function rangecount(b, mi, ma) { return new tokens.RangeCount(b, mi, ma) }
-function atleast(b, mi) { return new tokens.AtLeast(b, mi) }
-function atmost(b, ma) { return new tokens.AtMost(b, ma) }
+function exact(b, c) { return new tokens.ExactQuantifier(b, c) }
+function rangequant(b, mi, ma) { return new tokens.RangeQuantifier(b, mi, ma) }
+function atleast(b, mi) { return new tokens.AtLeastQuantifier(b, mi) }
+function atmost(b, ma) { return new tokens.AtMostQuantifier(b, ma) }
 
 
 /*  #######################################################################
@@ -156,7 +156,7 @@ const basic_13 = "\\d";
 const basic_parsed_13 = digit();
 
 const basic_14 = "\\w";
-const basic_parsed_14 = alphanum();
+const basic_parsed_14 = word();
 
 const basic_15 = "\\s";
 const basic_parsed_15 = whitespace();
@@ -165,7 +165,7 @@ const basic_16 = "a{7}";
 const basic_parsed_16 = exact(char('a'), 7);
 
 const basic_17 = "a{2,20}";
-const basic_parsed_17 = rangecount(char('a'), 2, 20);
+const basic_parsed_17 = rangequant(char('a'), 2, 20);
 
 const basic_18 = "a{3,}";
 const basic_parsed_18 = atleast(char('a'), 3);
@@ -235,17 +235,17 @@ describe('unit testing of parsing each token', () => {
     assert.deepEqual(p.parse(), basic_parsed_12);
   });
 
-  it('\\d parses as digit selector', () => {
+  it('\\d parses as digit character class', () => {
     const p = new Parser(basic_13);
     assert.deepEqual(p.parse(), basic_parsed_13);
   });
 
-  it('\\w parses as alphanumeric selector', () => {
+  it('\\w parses as word character class', () => {
     const p = new Parser(basic_14);
     assert.deepEqual(p.parse(), basic_parsed_14);
   });
 
-  it('\\s parses as whitespace selector', () => {
+  it('\\s parses as whitespace character class', () => {
     const p = new Parser(basic_15);
     assert.deepEqual(p.parse(), basic_parsed_15);
   });
@@ -352,7 +352,7 @@ const complex_parsed_7 =
         char('c')),
       union(
         digit(), 
-        alphanum())),
+        word())),
     star(whitespace()));
 
 const complex_8 = "v{30}x{2,5}y{6,}z{,100}";
@@ -361,7 +361,7 @@ const complex_parsed_8 =
     seq(
       seq(
         exact(char('v'), 30),
-        rangecount(char('x'), 2, 5)),
+        rangequant(char('x'), 2, 5)),
       atleast(char('y'), 6)),
     atmost(char('z'), 100));
 
@@ -440,11 +440,11 @@ const edge_parsed_4 =
     charseq(
       whitespace(),
       digit()),
-    alphanum());
+    word());
 
 const edge_5 = "(ab*c){4,10}";
 const edge_parsed_5 = 
-  rangecount(
+  rangequant(
     seq(
       seq(
         char('a'),
@@ -470,7 +470,7 @@ describe('interesting edge cases', () => {
     assert.deepEqual(p.parse(), edge_parsed_3);
   });
 
-  it('special selectors recognized within charset', () => {
+  it('character classes \\d, \\w, and \\s recognized within charset', () => {
     const p = new Parser(edge_4);
     assert.deepEqual(p.parse(), edge_parsed_4);
   });

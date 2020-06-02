@@ -123,7 +123,7 @@ class Parser {
   ############################################################################
 
   A Literal is a Unicode character literal
-  A Number is an integer value
+  A Number is a nonnegative integer value
 
   A Regex is one of:
     - Union(Term, Regex)

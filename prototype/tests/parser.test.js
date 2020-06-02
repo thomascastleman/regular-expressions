@@ -109,6 +109,7 @@ describe('parser auxiliary functions', () => {
 
 });
 
+
 /*  #######################################################################
     #--------------------- Parsing basic expressions ---------------------# 
     ####################################################################### */
@@ -160,6 +161,17 @@ const basic_parsed_14 = alphanum();
 const basic_15 = "\\s";
 const basic_parsed_15 = whitespace();
 
+const basic_16 = "a{7}";
+const basic_parsed_16 = exact(char('a'), 7);
+
+const basic_17 = "a{2,20}";
+const basic_parsed_17 = rangecount(char('a'), 2, 20);
+
+const basic_18 = "a{3,}";
+const basic_parsed_18 = atleast(char('a'), 3);
+
+const basic_19 = "a{,15}";
+const basic_parsed_19 = atmost(char('a'), 15);
 
 describe('unit testing of parsing each token', () => {
 
@@ -236,6 +248,26 @@ describe('unit testing of parsing each token', () => {
   it('\\s parses as whitespace selector', () => {
     const p = new Parser(basic_15);
     assert.deepEqual(p.parse(), basic_parsed_15);
+  });
+
+  it('{n} exact count parses correctly', () => {
+    const p = new Parser(basic_16);
+    assert.deepEqual(p.parse(), basic_parsed_16);
+  });
+
+  it('{min,max} range count parses correctly', () => {
+    const p = new Parser(basic_17);
+    assert.deepEqual(p.parse(), basic_parsed_17);
+  });
+
+  it('{min,} \'at least\' parses correctly', () => {
+    const p = new Parser(basic_18);
+    assert.deepEqual(p.parse(), basic_parsed_18);
+  });
+
+  it('{,max} \'at most\' parses correctly', () => {
+    const p = new Parser(basic_19);
+    assert.deepEqual(p.parse(), basic_parsed_19);
   });
 
 });
@@ -323,6 +355,16 @@ const complex_parsed_7 =
         alphanum())),
     star(whitespace()));
 
+const complex_8 = "v{30}x{2,5}y{6,}z{,100}";
+const complex_parsed_8 =
+  seq(
+    seq(
+      seq(
+        exact(char('v'), 30),
+        rangecount(char('x'), 2, 5)),
+      atleast(char('y'), 6)),
+    atmost(char('z'), 100));
+
 describe('parsing more complicated expressions', () => {
 
   it('abcd parsed correctly', () => {
@@ -360,6 +402,11 @@ describe('parsing more complicated expressions', () => {
     assert.deepEqual(p.parse(), complex_parsed_7);
   });
 
+  it('v{30}x{2,5}y{6,}z{,100} parsed correctly', () => {
+    const p = new Parser(complex_8);
+    assert.deepEqual(p.parse(), complex_parsed_8);
+  });
+
 });
 
 
@@ -395,6 +442,17 @@ const edge_parsed_4 =
       digit()),
     alphanum());
 
+const edge_5 = "(ab*c){4,10}";
+const edge_parsed_5 = 
+  rangecount(
+    seq(
+      seq(
+        char('a'),
+        star(char('b'))),
+      char('c')),
+    4,
+    10);
+
 describe('interesting edge cases', () => {
 
   it('arbitrarily nested expression parses normally', () => {
@@ -417,6 +475,11 @@ describe('interesting edge cases', () => {
     assert.deepEqual(p.parse(), edge_parsed_4);
   });
 
+  it('counting works with a sub-expression as base', () => {
+    const p = new Parser(edge_5);
+    assert.deepEqual(p.parse(), edge_parsed_5);
+  });
+
 });
 
 
@@ -436,7 +499,12 @@ const err_9 = "a]b+c";        // bracket out of place
 const err_10 = "xyz*+";       // + out of place
 const err_11 = "abc(";        // paren out of place
 const err_12 = "+*?";         // unary operators applied to nothing
-const err_13 = "(((((()))))"  // this one is just fun
+const err_13 = "(((((()))))"; // this one is just fun
+const err_14 = "{2}";         // lone count expression
+const err_15 = "{5,100}";     // lone range
+const err_16 = "{3,}";        // lone at least
+const err_17 = "{,18}";       // lone at most
+const err_18 = "ab{10c";      // unclosed counting expr
 
 describe('erroring expressions', () => {
   it('lone unary operator fails to parse', () => {
@@ -475,5 +543,23 @@ describe('erroring expressions', () => {
     assert.throws(() => { p3.parse() });
     assert.throws(() => { p4.parse() });
     assert.throws(() => { p5.parse() });
+  });
+
+  it('lone counting expressions fail to parse without a base', () => {
+    const p1 = new Parser(err_14);
+    const p2 = new Parser(err_15);
+    const p3 = new Parser(err_16);
+    const p4 = new Parser(err_17);
+
+    assert.throws(() => { p1.parse() });
+    assert.throws(() => { p2.parse() });
+    assert.throws(() => { p3.parse() });
+    assert.throws(() => { p4.parse() });
+  });
+
+  it('unclosed counting expression fails to parse', () => {
+    const p1 = new Parser(err_18);
+
+    assert.throws(() => { p1.parse() });
   });
 });

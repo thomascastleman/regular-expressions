@@ -16,6 +16,13 @@ module.exports = {
   RANGE : 6,
   CHARACTER : 7,
   DOT : 8,
-  EMPTY : 9
+  EMPTY : 9,
+  DIGIT : 10,
+  ALPHANUMERIC : 11,
+  WHITESPACE : 12,
+  EXACT_COUNT : 13,
+  RANGE_COUNT : 14,
+  AT_LEAST : 15,
+  AT_MOST : 16
 
 }

@@ -105,6 +105,75 @@ class Empty {
   }
 }
 
+/*  Represents any digit 0-9.
+    concretely, "\d" or "[0-9]" */
+class Digit {
+  constructor() {
+    this.type = globals.DIGIT;
+  }
+}
+
+/*  Represents any alphanumeric character, plus "_" (underscore).
+    concretely, "\w" or "[A-Za-z0-9_]"  */
+class Alphanumeric {
+  constructor() {
+    this.type = globals.ALPHANUMERIC;
+  }
+}
+
+/*  Represents whitespace including spaces, tabs, newlines, etc. 
+    concretely, "\s" or "[ \t\r\n\v\f]"   */
+class Whitespace {
+  constructor() {
+    this.type = globals.WHITESPACE;
+  }
+}
+
+/*  {n} which demands exactly n occurrences of the
+    preceding base. 
+    concretely, "a{4}" */
+class ExactCount {
+  constructor(_base, _count) {
+    this.type = globals.EXACT_COUNT;
+    this.base = _base;
+    this.count = _count;
+  }
+}
+
+/*  {min, max} which demands anywhere between min and max 
+    (inclusive) occurrences of the preceding base
+    concretely, "a{3,6}" */
+class RangeCount {
+  constructor(_base, _min, _max) {
+    this.type = globals.RANGE_COUNT;
+    this.base = _base;
+    this.min = _min;
+    this.max = _max;
+  }
+}
+
+/*  {min,} which demands at least min occurrences of the preceding
+    base, but any amount over that also matches. 
+    concretely, "a{5,}" */
+class AtLeast {
+  constructor(_base, _min) {
+    this.type = globals.AT_LEAST;
+    this.base = _base;
+    this.min = _min;
+  }
+}
+
+/*  {,max} which demands at most max occurrences of the preceding
+    base, but any amount below also matches.
+    concretely, "a{,7}" */
+class AtMost {
+  constructor(_base, _max) {
+    this.type = globals.AT_MOST;
+    this.base = _base;
+    this.max = _max;
+  }
+}
+
 module.exports = {
   Union,
   Sequence,
@@ -115,5 +184,12 @@ module.exports = {
   Range,
   Character,
   Dot,
-  Empty
+  Empty,
+  Digit,
+  Alphanumeric,
+  Whitespace,
+  ExactCount,
+  RangeCount,
+  AtLeast,
+  AtMost
 }

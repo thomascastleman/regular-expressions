@@ -6,8 +6,9 @@ const globals = require('./globals.js');
 const tokens = require('./tokens.js');
 
 /*
+
   The grammar for the regular expressions we'll accept.
-  Largely adapted from Matt Might's post: 
+  Adapted from Matt Might's post: 
   http://matt.might.net/articles/parsing-regex-with-recursive-descent/
 
   <regex> := <term> '|' <regex>
@@ -15,21 +16,35 @@ const tokens = require('./tokens.js');
 
   <term> := { <factor> }
 
-  <factor> := <base> '*'
-            | <base> '+'
-            | <base> '?'
+  <factor> := <base> <unary-op>
             | <base>
 
+  <unary-op> := '*'
+              | '+'
+              | '?'
+              | <count>
+
   <base> := <char>
-          | '\' <char>
+          | <built-in>
           | '.'
+          | '\' <char>
           | '(' <regex> ')'
           | '[' <charset-term> ']'
+
+  <count> :=  '{' <number> '}'
+            | '{' <number> ',' <number> '}'
+            | '{' <number> ',}'
+            | '{,' <number> '}'
 
   <charset-term> := <charset-factor> { <charset-factor> }
 
   <charset-factor> := <char> '-' <char>
                     | <char>
+                    | <built-in>
+
+  <built-in> := '\d'
+              | '\w'
+              | '\s'
 
 */
 
@@ -83,10 +98,12 @@ class Parser {
 
   /*  char -> bool
       Determine if a character matches one of the reserved characters
-      with special meanings */
+      with special meanings. These characters need to be escaped for 
+      literal use, unless within a charset. */
   is_special_char(c) {
     return  c == '(' || c == ')' ||
             c == '[' || c == ']' ||
+            c == '{' || c == '}' ||
             c == '*' || 
             c == '+' ||
             c == '?' || 
@@ -106,6 +123,7 @@ class Parser {
   ############################################################################
 
   A Literal is a Unicode character literal
+  A Number is an integer value
 
   A Regex is one of:
     - Union(Term, Regex)
@@ -121,10 +139,17 @@ class Parser {
     - Star(Base)
     - Plus(Base)
     - Question(Base)
+    - ExactCount(Base, Number)
+    - RangeCount(Base, Number, Number)
+    - AtLeast(Base, Number)
+    - AtMost(Base, Number)
 
   A Base is one of:
-    - Character(Literal)
+    - Digit()
+    - Alphanumeric()
+    - Whitespace()
     - Dot()
+    - Character(Literal)
     - Regex
     - CharsetTerm
 
@@ -135,6 +160,9 @@ class Parser {
   A CharsetFactor is one of:
     - Character(Literal)
     - Range(Literal, Literal)
+    - Digit()
+    - Alphanumeric()
+    - Whitespace()
 
   */
 
@@ -204,13 +232,12 @@ class Parser {
   /*  -> Base
       Parses a Base off the input stream.
       Bases can be literals, the '.' char, another sub-expression,
-      or a character set */
+      a character set, or a selector like \d */
   base() {
     switch (this.peek()) {
       // escaped character
       case '\\':
-        this.eat('\\');
-        return new tokens.Character(this.next());
+        return this.escaped();
 
       // dot character
       case '.':
@@ -242,6 +269,32 @@ class Parser {
     }
   }
 
+  /*  -> char
+        | Digit
+        | Alphanumeric
+        | Whitespace
+      Parses an escape sequence off the input stream. Handles \d, \w, and \s
+      as special selectors, otherwise returns the char after '\' */
+  escaped() {
+    this.eat('\\');
+    const esc = this.next();
+
+    // determine if this is a special selector or just an escaped literal
+    switch (esc) {
+      case 'd':
+        return new tokens.Digit();
+
+      case 'w':
+        return new tokens.Alphanumeric();
+
+      case 's':
+        return new tokens.Whitespace();
+
+      default:
+        return new tokens.Character(esc);
+    }
+  }
+
   /*  -> CharsetTerm
       Parses a CharsetTerm off the input stream.
       A CharsetTerm is any number of charset factors, enclosed 
@@ -264,6 +317,11 @@ class Parser {
       This is a single character literal or a character range which
       is found within a character set */
   charset_factor() {
+    // check for escape sequence within the charset
+    if (this.peek() == '\\') {
+      return this.escaped();
+    }
+
     const first = this.next();
 
     // if char range

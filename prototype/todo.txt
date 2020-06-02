@@ -1,3 +1,13 @@
 To do.
-- add desugared parse tree to existing complex examples
+
+Basic Parsing:
+- add {} notation to grammar / parser
+- add more erroring examples related to these new syntaxes
+
+Desugaring:
+- add desugaring examples
 - write desugaring
+
+NFA:
+
+Regex API:

@@ -97,7 +97,7 @@ class Parser {
   }
 
   /*  char -> bool
-      Determine if a character matches one of the reserved characters
+      Determines if a character matches one of the reserved characters
       with special meanings. These characters need to be escaped for 
       literal use, unless within a charset. */
   is_special_char(c) {
@@ -109,6 +109,21 @@ class Parser {
             c == '?' || 
             c == '|' ||
             c == '.';
+  }
+
+  /*  char -> bool
+      Determines if a character represents a digt 0-9 */
+  is_digit(c) {
+    return  c == '0' ||
+            c == '1' ||
+            c == '2' ||
+            c == '3' ||
+            c == '4' ||
+            c == '5' ||
+            c == '6' ||
+            c == '7' ||
+            c == '8' ||
+            c == '9';
   }
 
   /*
@@ -139,6 +154,9 @@ class Parser {
     - Star(Base)
     - Plus(Base)
     - Question(Base)
+    - Quantifier
+
+  A Quantifier is one of:
     - ExactQuantifier(Base, Number)
     - RangeQuantifier(Base, Number, Number)
     - AtLeastQuantifier(Base, Number)
@@ -226,6 +244,9 @@ class Parser {
         this.eat('?');
         return new tokens.Question(b);
 
+      case '{':
+        return this.quantifier(b);
+
       default:
         return b;
     }
@@ -295,6 +316,63 @@ class Parser {
       default:
         return new tokens.Character(esc);
     }
+  }
+
+  /*  Base -> Quantifier 
+      Parses a quantifier off the input stream, which operates on the given 
+      base. There are four: 1) exact, 2) range, 3) at least, and 4) at most*/
+  quantifier(b) {
+    this.eat('{');
+
+    // no min given --> "at most"
+    if (this.peek() == ',') {
+      // parse the max in its proper place
+      this.eat(',');
+      const max = this.number();
+      this.eat('}');
+
+      return new tokens.AtMostQuantifier(b, max);
+    }
+
+    const min = this.number();
+
+    // only min given --> "exact"
+    if (this.peek() == '}') {
+      this.eat('}');
+      return new tokens.ExactQuantifier(b, min);
+    }
+
+    this.eat(',');
+
+    // no max given --> "at least"
+    if (this.peek() == '}') {
+      this.eat('}');
+      return new tokens.AtLeastQuantifier(b, min);
+    }
+
+    // min and max --> "range"
+    const max = this.number();
+    this.eat('}');
+    return new tokens.RangeQuantifier(b, min, max);
+  }
+
+  /*  -> Number
+      Parses the longest continuous sequence of digits 0-9 it can find,
+      and converts this result to an integer */
+  number() {
+    let digits = "";
+
+    // while still reading digits
+    while (this.is_digit(this.peek())) {
+      digits += this.next();
+    }
+
+    const converted = parseInt(digits, 10);
+
+    if (isNaN(converted))
+      return new Error(`Expected an integer, but got: '${digits}'`);
+
+    return converted;
   }
 
   /*  -> CharsetTerm

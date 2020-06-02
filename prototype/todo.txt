@@ -1,8 +1,7 @@
 To do.
 
 Basic Parsing:
-- add {} notation to grammar / parser
-- add more erroring examples related to these new syntaxes
+- update parser to use indexing instead of substrings. then improve all error messages
 
 Desugaring:
 - add desugaring examples

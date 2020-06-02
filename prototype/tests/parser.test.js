@@ -107,6 +107,24 @@ describe('parser auxiliary functions', () => {
     assert.equal(p.is_special_char('G'), false);
   });
 
+  it('is_digit() recognizes digits correctly', () => {
+    const p = new Parser(re1);
+    assert.equal(p.is_digit('0'), true);
+    assert.equal(p.is_digit('1'), true);
+    assert.equal(p.is_digit('2'), true);
+    assert.equal(p.is_digit('3'), true);
+    assert.equal(p.is_digit('4'), true);
+    assert.equal(p.is_digit('5'), true);
+    assert.equal(p.is_digit('6'), true);
+    assert.equal(p.is_digit('7'), true);
+    assert.equal(p.is_digit('8'), true);
+    assert.equal(p.is_digit('9'), true);
+
+    assert.equal(p.is_digit('a'), false);
+    assert.equal(p.is_digit('&'), false);
+    assert.equal(p.is_digit('{'), false);
+  });
+
 });
 
 
@@ -505,6 +523,8 @@ const err_15 = "{5,100}";     // lone range
 const err_16 = "{3,}";        // lone at least
 const err_17 = "{,18}";       // lone at most
 const err_18 = "ab{10c";      // unclosed counting expr
+const err_19 = "xy{2.5}z";    // non-integer quantifier
+const err_20 = "z{4, 5}";     // whitespace in quantifier
 
 describe('erroring expressions', () => {
   it('lone unary operator fails to parse', () => {
@@ -559,7 +579,16 @@ describe('erroring expressions', () => {
 
   it('unclosed counting expression fails to parse', () => {
     const p1 = new Parser(err_18);
+    assert.throws(() => { p1.parse() });
+  });
 
+  it('quantifier with non-integer value fails to parse', () => {
+    const p1 = new Parser(err_19);
+    assert.throws(() => { p1.parse() });
+  });
+
+  it('whitespace in quantifier fails to parse', () => {
+    const p1 = new Parser(err_20);
     assert.throws(() => { p1.parse() });
   });
 });

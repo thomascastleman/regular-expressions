@@ -4,7 +4,9 @@
   "description": "Prototype implementation of a regex engine",
   "main": "main.js",
   "scripts": {
-    "test": "mocha ./tests/main.test.js"
+    "test": "mocha ./tests/main.test.js",
+    "test_parse": "mocha ./tests/parser.test.js",
+    "test_desugar": "mocha ./tests/desugar.test.js"
   },
   "author": "Thomas Castleman",
   "license": "ISC",

@@ -3,3 +3,4 @@
 */
 
 const parser_tests = require('./parser.test.js');
+const desugar_tests = require('./desugar.test.js');

@@ -8,12 +8,6 @@ const tokens = require('./tokens.js');
 /*
   -------------------------- Desugaring Rules --------------------------
 
-  Let Seq[ x_1, x_2, ..., x_n ] stand for 
-    Sequence(Sequence(... Sequence(x_1, x_2), x_3), ..., x_n)
-
-  Similarly, let Union[ x_1, x_2, ..., x_n ] stand for
-    Union(Union(... Union(x_1, x_2), x_3), ..., x_n)
-
   Primitive Tokens:
     - Union
     - Sequence
@@ -21,6 +15,12 @@ const tokens = require('./tokens.js');
     - Character
     - Dot
     - Empty
+
+  Let Seq[ x_1, x_2, ..., x_n ] stand for 
+    Sequence(Sequence(... Sequence(x_1, x_2), x_3), ..., x_n)
+
+  Similarly, let Union[ x_1, x_2, ..., x_n ] stand for
+    Union(Union(... Union(x_1, x_2), x_3), ..., x_n)
 
   Rules:
     Plus(base) => Sequence(base, Star(base))
@@ -55,8 +55,18 @@ const tokens = require('./tokens.js');
 
 class Desugarer {
 
+  /*  ComplexParseTree -> 
+      Construct a new instance of a desugarer, for the 
+      given complex parse tree (contains non-primitive tokens). */
   constructor(_tree) {
     this.tree = _tree;
+  }
+
+  /*  -> SimpleParseTree
+      Construct a parse tree equivalent to the one given, but 
+      using only primitive tokens */
+  desugar() {
+
   }
 
   /*  List<Token> (Token Token -> NestingToken) -> NestingToken
@@ -100,7 +110,7 @@ class Desugarer {
     // check for invalid range
     if (cp2 < cp1) {
       throw new Error(
-        `Invalid character range '${c1}-${c2}'. The former` + 
+        `Invalid character range '${c1}-${c2}'. The former ` + 
         `must precede the latter character`);
     }
 

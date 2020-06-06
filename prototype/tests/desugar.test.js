@@ -11,6 +11,7 @@ const {
 
 describe('arbitrary union & arbitrary sequence', () => {
   const d = new Desugarer(empty());
+
   const small_l1 = [char('x'), char('y')];
   const small_l2 = [dot(), word()];
   const small_l3 = [star(char('x')), seq(char('a'), char('b'))];
@@ -19,6 +20,26 @@ describe('arbitrary union & arbitrary sequence', () => {
   const large_l2 = [whitespace(), plus(char('x')), union(char('b'), empty())];
   const large_l3 = [empty(), empty(), word(), star(char('x')), q(char('y')),
               range('a', 'z')];
+
+  const one_el1 = [char('a')];
+  const one_el2 = [empty()];
+  const one_el3 = [exact(digit(), 10)];
+
+  // -------------- Arbitrary Union Tests --------------
+
+  it('list of one token returns that token (union)', () => {
+    assert.deepEqual(
+      d.arbitrary_union(one_el1),
+      char('a'));
+
+    assert.deepEqual(
+      d.arbitrary_union(one_el2),
+      empty());
+
+    assert.deepEqual(
+      d.arbitrary_union(one_el3),
+      exact(digit(), 10));
+  });
 
   it('list of two tokens becomes single union', () => {
     assert.deepEqual(
@@ -60,6 +81,23 @@ describe('arbitrary union & arbitrary sequence', () => {
             star(char('x'))),
           q(char('y'))),
         range('a', 'z')));
+  });
+
+
+  // -------------- Arbitrary Sequence Tests --------------
+
+  it('list of one token returns that token (sequence)', () => {
+    assert.deepEqual(
+      d.arbitrary_sequence(one_el1),
+      char('a'));
+
+    assert.deepEqual(
+      d.arbitrary_sequence(one_el2),
+      empty());
+
+    assert.deepEqual(
+      d.arbitrary_sequence(one_el3),
+      exact(digit(), 10));
   });
   
   it('list of two tokens becomes single sequence', () => {
@@ -157,4 +195,43 @@ describe('generating character ranges', () => {
     assert.throws(() => { d.char_range('9', '2') });
   });
 
+});
+
+describe('arbitrary copying', () => {
+  const d = new Desugarer(empty());
+
+  const t1 = empty();
+  const t2 = char('b');
+  const t3 = atmost(dot(), 10);
+  const t4 = union(dot(), char('x'));
+
+  it('n_copy can produce singleton copy', () => {
+    assert.deepEqual(
+      d.n_copy(t1, 1),
+      [t1]);
+
+    assert.deepEqual(
+      d.n_copy(t2, 1),
+      [t2]);
+  });
+
+  it('n_copy can produce arbitrary copies', () => {
+    assert.deepEqual(
+      d.n_copy(t1, 5),
+      [t1, t1, t1, t1, t1]);
+
+    assert.deepEqual(
+      d.n_copy(t2, 7),
+      [t2, t2, t2, t2, t2, t2, t2]);
+
+    assert.deepEqual(
+      d.n_copy(t4, 2)
+      [t4, t4]);
+  });
+
+  it('n_copy errors on non-positive n', () => {
+    assert.throws(() => { d.n_copy(t1, 0) });
+    assert.throws(() => { d.n_copy(t4, -1) });
+    assert.throws(() => { d.n_copy(t2, -50) });
+  });
 });

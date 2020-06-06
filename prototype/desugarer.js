@@ -8,7 +8,7 @@ const tokens = require('./tokens.js');
 /*
   -------------------------- Desugaring Rules --------------------------
 
-  Primitive Tokens:
+  A SimpleToken is one of:
     - Union
     - Sequence
     - Star
@@ -55,7 +55,7 @@ const tokens = require('./tokens.js');
 
 class Desugarer {
 
-  /*  ComplexParseTree -> 
+  /*  ParseTree -> 
       Construct a new instance of a desugarer, for the 
       given complex parse tree (contains non-primitive tokens). */
   constructor(_tree) {
@@ -69,12 +69,21 @@ class Desugarer {
 
   }
 
+  /*  Token -> SimpleToken
+      Desugars a given token, expressing it as a (combination of)
+      simple tokens */
+  desugar_token(token) {
+
+  }
+
   /*  List<Token> (Token Token -> NestingToken) -> NestingToken
-      Converts a list of at least 2 elements into a nested
-      representation with the given nest-able token (e.g. Union) */
+      Converts a non-empty list into a nested representation 
+      with the given nest-able token (e.g. Union) */
   arbitrary_nest(l, cons) {
-    if (l.length < 2) 
-      throw new Error('Cannot construct an arbitrary nest with < 2 tokens');
+    if (l.length < 1)
+      throw new Error('Cannot construct an arbitrary nest with 0 tokens');
+    
+    if (l.length == 1) return l[0]; // if one element, return that element
 
     let inner = new cons(l[0], l[1]);
     let i = 2;
@@ -124,6 +133,18 @@ class Desugarer {
     }
 
     return range;
+  }
+
+  /*  Token -> List<Token>
+      Produces a list containing n copies of (references to) the given token */
+  n_copy(t, n) {
+    if (n <= 0)
+      throw new Error(`Cannot produce ${n} copies of token ${t}`);
+
+    const copies = [];
+    for (let i = 0; i < n; i++) { copies.push(t); }
+
+    return copies;
   }
 
 }

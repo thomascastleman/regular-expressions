@@ -9,6 +9,22 @@ const {
   digit, word, whitespace, exact, rangequant, atleast, atmost
 } = require('./globals.test.js');
 
+/*  String -> Union 
+    Converts a string into a union of all characters in the string */
+function charUnion(chars) {
+  const tokenized = chars.split('').map(c => char(c));
+  return new Desugarer(empty()).arbitrary_union(tokenized);
+}
+
+/*  These are the desugared equivalents of each of these character
+    sets, for convenience. */
+const DIGIT = charUnion('0123456789');
+const WORD = charUnion( 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 
+                        'abcdefghijklmnopqrstuvwxyz' + 
+                        '0123456789' + 
+                        '_');
+const WHITESPACE = charUnion(' \t\r\n\f');
+
 describe('arbitrary union & arbitrary sequence', () => {
   const d = new Desugarer(empty());
 
@@ -399,18 +415,12 @@ describe('tokens affected by desugaring', () => {
     assert.deepEqual(d3.desugar(), range_desugar_3);
   });
 
-  /*  String -> Union 
-      Converts a string into a union of all characters in the string */
-  function charUnion(chars) {
-    const tokenized = chars.split('').map(c => char(c));
-    return new Desugarer(empty()).arbitrary_union(tokenized);
-  }
 
   /*  Digit() desugars to Union['0', ..., '9']
       i.e. \d ===> (0|1|2|...|9)
   */
   const digit_1 = digit();
-  const digit_desugar_1 = charUnion('0123456789');
+  const digit_desugar_1 = DIGIT;
 
   it('Digit desugars', () => {
     const d1 = new Desugarer(digit_1);
@@ -424,10 +434,7 @@ describe('tokens affected by desugaring', () => {
       i.e. \w ===> (A|...|Z|a|...|z|0|...|9|_)
   */
   const word_1 = word();
-  const word_desugar_1 = charUnion( 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 
-                                    'abcdefghijklmnopqrstuvwxyz' + 
-                                    '0123456789' + 
-                                    '_');
+  const word_desugar_1 = WORD;
 
   it('Word desugars', () => {
     const d1 = new Desugarer(word_1);
@@ -438,7 +445,7 @@ describe('tokens affected by desugaring', () => {
       i.e. \s ===> ( |\t|\r|\n|\f)
   */
   const whitespace_1 = whitespace();
-  const whitespace_desugar_1 = charUnion(' \t\r\n\f');
+  const whitespace_desugar_1 = WHITESPACE;
 
   it('Whitespace desugars', () => {
     const d1 = new Desugarer(whitespace_1);
@@ -603,6 +610,126 @@ describe('tokens affected by desugaring', () => {
   });
 });
 
-// describe('full parse tree is desugared', () => {
+describe('full parse tree is desugared', () => {
+  const complex_1 = 
+    seq(seq(char('x'), plus(char('y'))), char('z'));
+  const desugar_1 =
+    seq(seq(char('x'), seq(char('y'), star(char('y')))), char('z'));
 
-// });
+  it('nested Plus', () => {
+    const d = new Desugarer(complex_1);
+    assert.deepEqual(d.desugar(), desugar_1);
+  });
+
+  const complex_2 = 
+    seq(seq(seq(char('a'), char('b')), q(char('c'))), char('d'));
+  const desugar_2 = 
+    seq(seq(seq(char('a'), char('b')), union(empty(), char('c'))), char('d'));
+
+  it('nested Question', () => {
+    const d = new Desugarer(complex_2);
+    assert.deepEqual(d.desugar(), desugar_2);
+  });
+
+  const complex_3 = 
+    seq(char('a'), charseq(charseq(char('x'), char('y')), char('z')));
+  const desugar_3 =
+    seq(char('a'), union(union(char('x'), char('y')), char('z')));
+
+  it('nested CharsetSequence', () => {
+    const d = new Desugarer(complex_3);
+    assert.deepEqual(d.desugar(), desugar_3);
+  });
+
+  const complex_4 = 
+    union(char('x'), range('d', 'f'));
+  const desugar_4 = 
+    union(char('x'), union(union(char('d'), char('e')), char('f')));
+
+  it('nested Range', () => {
+    const d = new Desugarer(complex_4);
+    assert.deepEqual(d.desugar(), desugar_4);
+  });
+
+  const complex_5 =
+    seq(seq(digit(), word()), plus(whitespace()));
+  const desugar_5 =
+    seq(seq(DIGIT, WORD), seq(WHITESPACE, star(WHITESPACE)));
+
+  it('nested Digit, Word, and Whitespace', () => {
+    const d = new Desugarer(complex_5);
+    assert.deepEqual(d.desugar(), desugar_5);
+  });
+
+  const complex_6 =
+    seq(seq(char('x'), char('1')), exact(digit(), 3));
+  const desugar_6 =
+    seq(seq(char('x'), char('1')), seq(seq(DIGIT, DIGIT), DIGIT));
+
+  it('nested ExactQuantifier', () => {
+    const d = new Desugarer(complex_6);
+    assert.deepEqual(d.desugar(), desugar_6);
+  });
+
+  const complex_7 =
+    seq(seq(seq(rangequant(word(), 3, 5), char('x')), char('y')), char('z'));
+  const desugar_7 =
+    seq(
+      seq(
+        seq(
+          seq(
+            seq(
+              seq(
+                seq(WORD, WORD),
+                WORD),
+              union(empty(), WORD)),
+            union(empty(), WORD)),
+          char('x')), 
+        char('y')), 
+      char('z'));
+
+  it('nested RangeQuantifier', () => {
+    const d = new Desugarer(complex_7);
+    assert.deepEqual(d.desugar(), desugar_7);
+  });
+
+  const complex_8 = 
+    seq(
+      seq(
+        char('a'),
+        atleast(char('b'), 2)),
+      char('c'));
+  const desugar_8 =
+    seq(
+      seq(
+        char('a'),
+        seq(seq(char('b'), char('b')), star(char('b')))),
+      char('c'));
+
+  it('nested AtLeastQuantifier', () => {
+    const d = new Desugarer(complex_8);
+    assert.deepEqual(d.desugar(), desugar_8);
+  });
+
+  const complex_9 =
+    seq(
+      seq(
+        char('a'),
+        atmost(char('b'), 3)),
+      char('c'));
+  const desugar_9 =
+    seq(
+      seq(
+        char('a'),
+        seq(
+          seq(
+            union(empty(), char('b')),
+            union(empty(), char('b'))),
+          union(empty(), char('b')))),
+      char('c'));
+
+  it('nested AtMostQuantifier', () => {
+    const d = new Desugarer(complex_9);
+    assert.deepEqual(d.desugar(), desugar_9);
+  });
+});

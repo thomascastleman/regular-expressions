@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": {
     "test": "mocha ./tests/main.test.js",
-    "test_parse": "mocha ./tests/parser.test.js",
-    "test_desugar": "mocha ./tests/desugar.test.js"
+    "parse": "mocha ./tests/parser.test.js",
+    "desugar": "mocha ./tests/desugar.test.js"
   },
   "author": "Thomas Castleman",
   "license": "ISC",

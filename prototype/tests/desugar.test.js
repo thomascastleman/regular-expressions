@@ -235,3 +235,374 @@ describe('arbitrary copying', () => {
     assert.throws(() => { d.n_copy(t2, -50) });
   });
 });
+
+describe('tokens not affected by desugaring', () => {
+  const union_1 = union(char('x'), dot());
+  const union_2 = union(empty(), char('a'));
+
+  const sequence_1 = seq(dot(), char('y'));
+  const sequence_2 = seq(star(char('x')), char('y'));
+
+  const star_1 = star(char('a'));
+  const star_2 = star(union(char('x'), char('y')));
+
+  const char_1 = char('x');
+  const char_2 = char('9');
+
+  const dot_1 = dot();
+
+  const empty_1 = empty();
+
+  it('Union is unaffected', () => {
+    const d1 = new Desugarer(union_1);
+    const d2 = new Desugarer(union_2);
+
+    assert.deepEqual(d1.desugar(), union_1);
+    assert.deepEqual(d2.desugar(), union_2);
+  });
+
+  it('Sequence is unaffected', () => {
+    const d1 = new Desugarer(sequence_1);
+    const d2 = new Desugarer(sequence_2);
+
+    assert.deepEqual(d1.desugar(), sequence_1);
+    assert.deepEqual(d2.desugar(), sequence_2);
+  });
+
+  it('Star is unaffected', () => {
+    const d1 = new Desugarer(star_1);
+    const d2 = new Desugarer(star_2);
+
+    assert.deepEqual(d1.desugar(), star_1);
+    assert.deepEqual(d2.desugar(), star_2);
+  });
+
+  it('Character (literals) are unaffected', () => {
+    const d1 = new Desugarer(char_1);
+    const d2 = new Desugarer(char_2);
+
+    assert.deepEqual(d1.desugar(), char_1);
+    assert.deepEqual(d2.desugar(), char_2);
+  });
+
+  it('Dot is unaffected', () => {
+    const d1 = new Desugarer(dot_1);
+    assert.deepEqual(d1.desugar(), dot_1);
+  });
+
+  it('Empty expression is unaffected', () => {
+    const d1 = new Desugarer(empty_1);
+    assert.deepEqual(d1.desugar(), empty_1);
+  });
+});
+
+describe('tokens affected by desugaring', () => {
+  /*  Each set of examples tests for a particular token being desugared
+    --that is, we are not testing that the full parse tree is recursively 
+    desugared. Those tests are in the block below. */
+
+  /*  Plus(b) desugars to Sequence(b, Star(b))
+      i.e. b+ ===> bb* 
+  */
+  const plus_1 = plus(char('x'));
+  const plus_desugar_1 = seq(char('x'), star(char('x')));
+
+  const plus_2 = plus(union(char('a'), char('b')));
+  const plus_desugar_2 = 
+    seq(
+      union(char('a'), char('b')),
+      star(union(char('a'), char('b'))));
+
+  it('Plus desugars', () => {
+    const d1 = new Desugarer(plus_1);
+    const d2 = new Desugarer(plus_2);
+
+    assert.deepEqual(d1.desugar(), plus_desugar_1);
+    assert.deepEqual(d2.desugar(), plus_desugar_2);
+  });
+
+  /*  Question(b) desugars to Union(Empty(), b)
+      i.e. b? ===> (|b)
+  */
+  const question_1 = q(char('B'));
+  const question_desugar_1 = union(empty(), char('B'));
+
+  const question_2 = q(seq(char('A'), char('X')));
+  const question_desugar_2 = 
+    union(empty(), seq(char('A'), char('X')));
+
+  it('Question desugars', () => {
+    const d1 = new Desugarer(question_1);
+    const d2 = new Desugarer(question_2);
+
+    assert.deepEqual(d1.desugar(), question_desugar_1);
+    assert.deepEqual(d2.desugar(), question_desugar_2);
+  });
+
+  /*  CharsetSequence(l, r) desugars to Union(l, r)
+      i.e. [xyz] ===> (x|y|z)
+  */
+  const char_seq_1 = charseq(char('x'), char('y'));
+  const char_seq_desugar_1 = union(char('x'), char('y'));
+
+  const char_seq_2 = charseq(char('0'), char('X'));
+  const char_seq_desugar_2 = union(char('0'), char('X'));
+
+  it('CharsetSequence desugars', () => {
+    const d1 = new Desugarer(char_seq_1);
+    const d2 = new Desugarer(char_seq_2);
+
+    assert.deepEqual(d1.desugar(), char_seq_desugar_1);
+    assert.deepEqual(d2.desugar(), char_seq_desugar_2);
+  });
+
+  /*  Range(c_1, c_k) desugars to Union[c_1, ..., c_k]
+      i.e. [a-d] ===> (a|b|c|d)
+  */
+  const range_1 = range(char('a'), char('c'));
+  const range_desugar_1 = 
+    union(union(char('a'), char('b')), char('c'));
+
+  const range_2 = range(char('5'), char('9'));
+  const range_desugar_2 =
+    union(
+      union(
+        union(
+          union(
+            char('5'),
+            char('6')),
+          char('7')),
+        char('8')),
+      char('9'));
+
+  const range_3 = range(char('C'), char('H'));
+  const range_desugar_3 = 
+    union(
+      union(
+        union(
+          union(
+            union(
+              char('C'),
+              char('D')),
+            char('E')),
+          char('F')),
+        char('G')),
+      char('H'));
+
+  it('Range desugars', () => {
+    const d1 = new Desugarer(range_1);
+    const d2 = new Desugarer(range_2);
+    const d3 = new Desugarer(range_3);
+
+    assert.deepEqual(d1.desugar(), range_desugar_1);
+    assert.deepEqual(d2.desugar(), range_desugar_2);
+    assert.deepEqual(d3.desugar(), range_desugar_3);
+  });
+
+  /*  String -> Union 
+      Converts a string into a union of all characters in the string */
+  function charUnion(chars) {
+    const tokenized = chars.split('').map(c => char(c));
+    return new Desugarer(empty()).arbitrary_union(tokenized);
+  }
+
+  /*  Digit() desugars to Union['0', ..., '9']
+      i.e. \d ===> (0|1|2|...|9)
+  */
+  const digit_1 = digit();
+  const digit_desugar_1 = charUnion('0123456789');
+
+  it('Digit desugars', () => {
+    const d1 = new Desugarer(digit_1);
+    assert.deepEqual(d1.desugar(), digit_desugar_1);
+  });
+
+
+  /*  Word() desugars to Union['A', ..., 'Z',
+                              'a', ..., 'z',
+                              '0', ..., '9', '_']
+      i.e. \w ===> (A|...|Z|a|...|z|0|...|9|_)
+  */
+  const word_1 = word();
+  const word_desugar_1 = charUnion( 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 
+                                    'abcdefghijklmnopqrstuvwxyz' + 
+                                    '0123456789' + 
+                                    '_');
+
+  it('Word desugars', () => {
+    const d1 = new Desugarer(word_1);
+    assert.deepEqual(d1.desugar(), word_desugar_1);
+  });
+
+  /*  Whitespace() desugars to Union[' ', '\t', '\r', '\n', '\f']
+      i.e. \s ===> ( |\t|\r|\n|\f)
+  */
+  const whitespace_1 = whitespace();
+  const whitespace_desugar_1 = charUnion(' \t\r\n\f');
+
+  it('Whitespace desugars', () => {
+    const d1 = new Desugarer(whitespace_1);
+    assert.deepEqual(d1.desugar(), whitespace_desugar_1);
+  });
+
+  // use this for arbitrary union/sequence
+  const d = new Desugarer(empty());
+
+  /*  ExactQuantifier(b, n) desugars to Seq[b_1, ..., b_n]
+      i.e. b{n} ===> bbbb...b (n times)
+  */
+  const exact_1 = exact(char('a'), 3);
+  const exact_desugar_1 = 
+    d.arbitrary_sequence([char('a'), char('a'), char('a')]);
+
+  const exact_2 = exact(dot(), 5);
+  const exact_desugar_2 =
+    d.arbitrary_sequence([dot(), dot(), dot(), dot(), dot()]);
+
+  const exact_3 = exact(char('4'), 1);
+  const exact_desugar_3 =
+    d.arbitrary_sequence([char('4')]);
+
+  const exact_4 = exact(char('B'), 0);
+  const exact_desugar_4 = empty();
+
+  it('ExactQuantifier desugars', () => {
+    const d1 = new Desugarer(exact_1);
+    const d2 = new Desugarer(exact_2);
+    const d3 = new Desugarer(exact_3);
+    const d4 = new Desugarer(exact_4);
+
+    assert.deepEqual(d1.desugar(), exact_desugar_1);
+    assert.deepEqual(d2.desugar(), exact_desugar_2);
+    assert.deepEqual(d3.desugar(), exact_desugar_3);
+    assert.deepEqual(d4.desugar(), exact_desugar_4);
+  });
+
+  /*  RangeQuantifier(b, min, max) desugars to Seq[Seq[b_1, ..., b_min], 
+                                                  Union(Empty(), b_min+1), 
+                                                  ..., 
+                                                  Union(Empty(), b_max)]
+      i.e. b{min,max} ===> bbbb...b(|b)(|b)...(|b)
+  */
+  const range_quant_1 = rangequant(char('x'), 2, 4);
+  const range_quant_desugar_1 =
+    d.arbitrary_sequence([
+      char('x'), char('x'), 
+      union(empty(), char('x')), union(empty(), char('x'))
+    ]);
+
+  const range_quant_2 = rangequant(seq(char('a'), char('b')), 1, 3);
+  const range_quant_desugar_2 =
+    d.arbitrary_sequence([
+      seq(char('a'), char('b')),
+      union(empty(), seq(char('a'), char('b'))),
+      union(empty(), seq(char('a'), char('b')))
+    ]);
+
+  const range_quant_3 = rangequant(char('9'), 0, 5);
+  const range_quant_desugar_3 = 
+    d.arbitrary_sequence([
+      union(empty(), char('9')),
+      union(empty(), char('9')),
+      union(empty(), char('9')),
+      union(empty(), char('9')),
+      union(empty(), char('9'))
+    ]);
+
+  const range_quant_4 = rangequant(char('z'), 2, 2);
+  const range_quant_desugar_4 =
+    d.arbitrary_sequence([
+      char('z'),
+      char('z')
+    ]);
+
+  it('RangeQuantifier desugars', () => {
+    const d1 = new Desugarer(range_quant_1);
+    const d2 = new Desugarer(range_quant_2);
+    const d3 = new Desugarer(range_quant_3);
+    const d4 = new Desugarer(range_quant_4);
+
+    assert.deepEqual(d1.desugar(), range_quant_desugar_1);
+    assert.deepEqual(d2.desugar(), range_quant_desugar_2);
+    assert.deepEqual(d3.desugar(), range_quant_desugar_3);
+    assert.deepEqual(d4.desugar(), range_quant_desugar_4);
+  });
+
+  /*  AtLeastQuantifier(b, min) desugars to Seq[Seq[b_1, ..., b_min], Star(b)]
+      i.e. b{min,} ===> bbbb...bb*
+  */
+  const atleast_1 = atleast(char('a'), 4);
+  const atleast_desugar_1 =
+    d.arbitrary_sequence([
+      char('a'),
+      char('a'),
+      char('a'),
+      char('a'),
+      star(char('a'))
+    ]);
+
+  const atleast_2 = atleast(char('x'), 0);
+  const atleast_desugar_2 = star(char('x'));
+
+  const atleast_3 = atleast(union(char('x'), char('y')), 1);
+  const atleast_desugar_3 = 
+    d.arbitrary_sequence([
+      union(char('x'), char('y')),
+      star(union(char('x'), char('y')))
+    ]);
+
+  it('AtLeastQuantifier desugars', () => {
+    const d1 = new Desugarer(atleast_1);
+    const d2 = new Desugarer(atleast_2);
+    const d3 = new Desugarer(atleast_3);
+
+    assert.deepEqual(d1.desugar(), atleast_desugar_1);
+    assert.deepEqual(d2.desugar(), atleast_desugar_2);
+    assert.deepEqual(d3.desugar(), atleast_desugar_3);
+  });
+
+  /*  AtMostQuantifier(b, max) desugars to Seq[Union(Empty(), b_1), 
+                                              ...,
+                                              Union(Empty(), b_max)]
+      i.e. b{,max} ===> (|b)(|b)...(|b)   (max times) 
+  */
+  const atmost_1 = atmost(char('a'), 3);
+  const atmost_desugar_1 = 
+    d.arbitrary_sequence([
+      union(empty(), char('a')),
+      union(empty(), char('a')),
+      union(empty(), char('a'))
+    ]);
+
+  const atmost_2 = atmost(char('['), 1);
+  const atmost_desugar_2 =
+    d.arbitrary_sequence([
+      union(empty(), char('['))
+    ]);
+
+  const atmost_3 = atmost(seq(char('x'), char('y')), 2);
+  const atmost_desugar_3 = 
+    d.arbitrary_sequence([
+      union(empty(), seq(char('x'), char('y'))),
+      union(empty(), seq(char('x'), char('y')))
+    ]);
+
+  const atmost_4 = atmost(char('z'), 0);
+  const atmost_desugar_4 = empty();
+
+  it('AtMostQuantifier desugars', () => {
+    const d1 = new Desugarer(atmost_1);
+    const d2 = new Desugarer(atmost_2);
+    const d3 = new Desugarer(atmost_3);
+    const d4 = new Desugarer(atmost_4);
+
+    assert.deepEqual(d1.desugar(), atmost_desugar_1);
+    assert.deepEqual(d2.desugar(), atmost_desugar_2);
+    assert.deepEqual(d3.desugar(), atmost_desugar_3);
+    assert.deepEqual(d4.desugar(), atmost_desugar_4);
+  });
+});
+
+// describe('full parse tree is desugared', () => {
+
+// });

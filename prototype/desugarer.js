@@ -55,14 +55,14 @@ const tokens = require('./tokens.js');
 
 class Desugarer {
 
-  /*  ParseTree -> 
+  /*  Token -> 
       Construct a new instance of a desugarer, for the 
-      given complex parse tree (contains non-primitive tokens). */
+      given complex parse tree (contains non-simple tokens). */
   constructor(_tree) {
     this.tree = _tree;
   }
 
-  /*  -> SimpleParseTree
+  /*  -> SimpleToken
       Construct a parse tree equivalent to the one given, but 
       using only primitive tokens */
   desugar() {

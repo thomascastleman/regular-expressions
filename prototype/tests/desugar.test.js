@@ -253,6 +253,8 @@ describe('arbitrary copying', () => {
 });
 
 describe('tokens not affected by desugaring', () => {
+  const d = new Desugarer(empty());
+
   const union_1 = union(char('x'), dot());
   const union_2 = union(empty(), char('a'));
 
@@ -270,45 +272,31 @@ describe('tokens not affected by desugaring', () => {
   const empty_1 = empty();
 
   it('Union is unaffected', () => {
-    const d1 = new Desugarer(union_1);
-    const d2 = new Desugarer(union_2);
-
-    assert.deepEqual(d1.desugar(), union_1);
-    assert.deepEqual(d2.desugar(), union_2);
+    assert.deepEqual(d.desugar_token(union_1), union_1);
+    assert.deepEqual(d.desugar_token(union_2), union_2);
   });
 
   it('Sequence is unaffected', () => {
-    const d1 = new Desugarer(sequence_1);
-    const d2 = new Desugarer(sequence_2);
-
-    assert.deepEqual(d1.desugar(), sequence_1);
-    assert.deepEqual(d2.desugar(), sequence_2);
+    assert.deepEqual(d.desugar_token(sequence_1), sequence_1);
+    assert.deepEqual(d.desugar_token(sequence_2), sequence_2);
   });
 
   it('Star is unaffected', () => {
-    const d1 = new Desugarer(star_1);
-    const d2 = new Desugarer(star_2);
-
-    assert.deepEqual(d1.desugar(), star_1);
-    assert.deepEqual(d2.desugar(), star_2);
+    assert.deepEqual(d.desugar_token(star_1), star_1);
+    assert.deepEqual(d.desugar_token(star_2), star_2);
   });
 
   it('Character (literals) are unaffected', () => {
-    const d1 = new Desugarer(char_1);
-    const d2 = new Desugarer(char_2);
-
-    assert.deepEqual(d1.desugar(), char_1);
-    assert.deepEqual(d2.desugar(), char_2);
+    assert.deepEqual(d.desugar_token(char_1), char_1);
+    assert.deepEqual(d.desugar_token(char_2), char_2);
   });
 
   it('Dot is unaffected', () => {
-    const d1 = new Desugarer(dot_1);
-    assert.deepEqual(d1.desugar(), dot_1);
+    assert.deepEqual(d.desugar_token(dot_1), dot_1);
   });
 
   it('Empty expression is unaffected', () => {
-    const d1 = new Desugarer(empty_1);
-    assert.deepEqual(d1.desugar(), empty_1);
+    assert.deepEqual(d.desugar_token(empty_1), empty_1);
   });
 });
 
@@ -316,6 +304,8 @@ describe('tokens affected by desugaring', () => {
   /*  Each set of examples tests for a particular token being desugared
     --that is, we are not testing that the full parse tree is recursively 
     desugared. Those tests are in the block below. */
+
+  const d = new Desugarer(empty());
 
   /*  Plus(b) desugars to Sequence(b, Star(b))
       i.e. b+ ===> bb* 
@@ -330,11 +320,8 @@ describe('tokens affected by desugaring', () => {
       star(union(char('a'), char('b'))));
 
   it('Plus desugars', () => {
-    const d1 = new Desugarer(plus_1);
-    const d2 = new Desugarer(plus_2);
-
-    assert.deepEqual(d1.desugar(), plus_desugar_1);
-    assert.deepEqual(d2.desugar(), plus_desugar_2);
+    assert.deepEqual(d.desugar_token(plus_1), plus_desugar_1);
+    assert.deepEqual(d.desugar_token(plus_2), plus_desugar_2);
   });
 
   /*  Question(b) desugars to Union(Empty(), b)
@@ -348,11 +335,8 @@ describe('tokens affected by desugaring', () => {
     union(empty(), seq(char('A'), char('X')));
 
   it('Question desugars', () => {
-    const d1 = new Desugarer(question_1);
-    const d2 = new Desugarer(question_2);
-
-    assert.deepEqual(d1.desugar(), question_desugar_1);
-    assert.deepEqual(d2.desugar(), question_desugar_2);
+    assert.deepEqual(d.desugar_token(question_1), question_desugar_1);
+    assert.deepEqual(d.desugar_token(question_2), question_desugar_2);
   });
 
   /*  CharsetSequence(l, r) desugars to Union(l, r)
@@ -365,11 +349,8 @@ describe('tokens affected by desugaring', () => {
   const char_seq_desugar_2 = union(char('0'), char('X'));
 
   it('CharsetSequence desugars', () => {
-    const d1 = new Desugarer(char_seq_1);
-    const d2 = new Desugarer(char_seq_2);
-
-    assert.deepEqual(d1.desugar(), char_seq_desugar_1);
-    assert.deepEqual(d2.desugar(), char_seq_desugar_2);
+    assert.deepEqual(d.desugar_token(char_seq_1), char_seq_desugar_1);
+    assert.deepEqual(d.desugar_token(char_seq_2), char_seq_desugar_2);
   });
 
   /*  Range(c_1, c_k) desugars to Union[c_1, ..., c_k]
@@ -406,13 +387,9 @@ describe('tokens affected by desugaring', () => {
       char('H'));
 
   it('Range desugars', () => {
-    const d1 = new Desugarer(range_1);
-    const d2 = new Desugarer(range_2);
-    const d3 = new Desugarer(range_3);
-
-    assert.deepEqual(d1.desugar(), range_desugar_1);
-    assert.deepEqual(d2.desugar(), range_desugar_2);
-    assert.deepEqual(d3.desugar(), range_desugar_3);
+    assert.deepEqual(d.desugar_token(range_1), range_desugar_1);
+    assert.deepEqual(d.desugar_token(range_2), range_desugar_2);
+    assert.deepEqual(d.desugar_token(range_3), range_desugar_3);
   });
 
 
@@ -423,8 +400,7 @@ describe('tokens affected by desugaring', () => {
   const digit_desugar_1 = DIGIT;
 
   it('Digit desugars', () => {
-    const d1 = new Desugarer(digit_1);
-    assert.deepEqual(d1.desugar(), digit_desugar_1);
+    assert.deepEqual(d.desugar_token(digit_1), digit_desugar_1);
   });
 
 
@@ -437,8 +413,7 @@ describe('tokens affected by desugaring', () => {
   const word_desugar_1 = WORD;
 
   it('Word desugars', () => {
-    const d1 = new Desugarer(word_1);
-    assert.deepEqual(d1.desugar(), word_desugar_1);
+    assert.deepEqual(d.desugar_token(word_1), word_desugar_1);
   });
 
   /*  Whitespace() desugars to Union[' ', '\t', '\r', '\n', '\f']
@@ -448,12 +423,8 @@ describe('tokens affected by desugaring', () => {
   const whitespace_desugar_1 = WHITESPACE;
 
   it('Whitespace desugars', () => {
-    const d1 = new Desugarer(whitespace_1);
-    assert.deepEqual(d1.desugar(), whitespace_desugar_1);
+    assert.deepEqual(d.desugar_token(whitespace_1), whitespace_desugar_1);
   });
-
-  // use this for arbitrary union/sequence
-  const d = new Desugarer(empty());
 
   /*  ExactQuantifier(b, n) desugars to Seq[b_1, ..., b_n]
       i.e. b{n} ===> bbbb...b (n times)
@@ -474,15 +445,10 @@ describe('tokens affected by desugaring', () => {
   const exact_desugar_4 = empty();
 
   it('ExactQuantifier desugars', () => {
-    const d1 = new Desugarer(exact_1);
-    const d2 = new Desugarer(exact_2);
-    const d3 = new Desugarer(exact_3);
-    const d4 = new Desugarer(exact_4);
-
-    assert.deepEqual(d1.desugar(), exact_desugar_1);
-    assert.deepEqual(d2.desugar(), exact_desugar_2);
-    assert.deepEqual(d3.desugar(), exact_desugar_3);
-    assert.deepEqual(d4.desugar(), exact_desugar_4);
+    assert.deepEqual(d.desugar_token(exact_1), exact_desugar_1);
+    assert.deepEqual(d.desugar_token(exact_2), exact_desugar_2);
+    assert.deepEqual(d.desugar_token(exact_3), exact_desugar_3);
+    assert.deepEqual(d.desugar_token(exact_4), exact_desugar_4);
   });
 
   /*  RangeQuantifier(b, min, max) desugars to Seq[Seq[b_1, ..., b_min], 
@@ -524,15 +490,10 @@ describe('tokens affected by desugaring', () => {
     ]);
 
   it('RangeQuantifier desugars', () => {
-    const d1 = new Desugarer(range_quant_1);
-    const d2 = new Desugarer(range_quant_2);
-    const d3 = new Desugarer(range_quant_3);
-    const d4 = new Desugarer(range_quant_4);
-
-    assert.deepEqual(d1.desugar(), range_quant_desugar_1);
-    assert.deepEqual(d2.desugar(), range_quant_desugar_2);
-    assert.deepEqual(d3.desugar(), range_quant_desugar_3);
-    assert.deepEqual(d4.desugar(), range_quant_desugar_4);
+    assert.deepEqual(d.desugar_token(range_quant_1), range_quant_desugar_1);
+    assert.deepEqual(d.desugar_token(range_quant_2), range_quant_desugar_2);
+    assert.deepEqual(d.desugar_token(range_quant_3), range_quant_desugar_3);
+    assert.deepEqual(d.desugar_token(range_quant_4), range_quant_desugar_4);
   });
 
   /*  AtLeastQuantifier(b, min) desugars to Seq[Seq[b_1, ..., b_min], Star(b)]
@@ -559,13 +520,9 @@ describe('tokens affected by desugaring', () => {
     ]);
 
   it('AtLeastQuantifier desugars', () => {
-    const d1 = new Desugarer(atleast_1);
-    const d2 = new Desugarer(atleast_2);
-    const d3 = new Desugarer(atleast_3);
-
-    assert.deepEqual(d1.desugar(), atleast_desugar_1);
-    assert.deepEqual(d2.desugar(), atleast_desugar_2);
-    assert.deepEqual(d3.desugar(), atleast_desugar_3);
+    assert.deepEqual(d.desugar_token(atleast_1), atleast_desugar_1);
+    assert.deepEqual(d.desugar_token(atleast_2), atleast_desugar_2);
+    assert.deepEqual(d.desugar_token(atleast_3), atleast_desugar_3);
   });
 
   /*  AtMostQuantifier(b, max) desugars to Seq[Union(Empty(), b_1), 
@@ -598,19 +555,14 @@ describe('tokens affected by desugaring', () => {
   const atmost_desugar_4 = empty();
 
   it('AtMostQuantifier desugars', () => {
-    const d1 = new Desugarer(atmost_1);
-    const d2 = new Desugarer(atmost_2);
-    const d3 = new Desugarer(atmost_3);
-    const d4 = new Desugarer(atmost_4);
-
-    assert.deepEqual(d1.desugar(), atmost_desugar_1);
-    assert.deepEqual(d2.desugar(), atmost_desugar_2);
-    assert.deepEqual(d3.desugar(), atmost_desugar_3);
-    assert.deepEqual(d4.desugar(), atmost_desugar_4);
+    assert.deepEqual(d.desugar_token(atmost_1), atmost_desugar_1);
+    assert.deepEqual(d.desugar_token(atmost_2), atmost_desugar_2);
+    assert.deepEqual(d.desugar_token(atmost_3), atmost_desugar_3);
+    assert.deepEqual(d.desugar_token(atmost_4), atmost_desugar_4);
   });
 });
 
-describe('full parse tree is desugared', () => {
+describe('full parse tree desugaring', () => {
   const complex_1 = 
     seq(seq(char('x'), plus(char('y'))), char('z'));
   const desugar_1 =
@@ -731,5 +683,59 @@ describe('full parse tree is desugared', () => {
   it('nested AtMostQuantifier', () => {
     const d = new Desugarer(complex_9);
     assert.deepEqual(d.desugar(), desugar_9);
+  });
+});
+
+describe('simplifications post-desugaring', () => {
+  const d = new Desugarer(empty());
+
+  it('Union(Dot, Dot) simplifies to Dot', () => {
+    assert.deepEqual(d.simplify(union(dot(), dot())), dot());
+  });
+
+  it('Union(Empty, Empty) simplifies to Empty', () => {
+    assert.deepEqual(d.simplify(union(empty(), empty())), empty());
+  });
+
+  it('Union(Dot, Char) and Union(Char, Dot) simplify to Dot (if not \\n)', () => {
+    assert.deepEqual(d.simplify(union(dot(), char('x'))), dot());
+    assert.deepEqual(d.simplify(union(char('a'), dot())), dot());
+    assert.deepEqual(
+      d.simplify(union(dot(), char('\n'))), 
+      union(dot(), char('\n')));
+    assert.deepEqual(
+      d.simplify(union(char('\n'), dot())), 
+      union(char('\n'), dot()));
+  });
+
+  it('Sequence(Empty, T) and Sequence(T, Empty) simplify to T', () => {
+    assert.deepEqual(d.simplify(seq(empty(), char('v'))), char('v'));
+    assert.deepEqual(d.simplify(seq(char('x'), empty())), char('x'));
+    assert.deepEqual(d.simplify(seq(empty(), empty())), empty());
+    assert.deepEqual(d.simplify(seq(dot(), empty())), dot());
+  });
+
+  it('Star(Empty) simplifies to Empty', () => {
+    assert.deepEqual(d.simplify(star(empty())), empty());
+    assert.deepEqual(d.simplify(star(char('a'))), star(char('a')));
+  });
+
+  it('nested tokens are simplified recursively', () => {
+    const ex1 = seq(seq(seq(seq(char('a'), empty()), empty()), empty()), empty());
+    assert.deepEqual(d.simplify(ex1), char('a'));
+
+    const ex2 = 
+      seq(
+        star(empty()), 
+        union(seq(empty(), empty()), empty()));
+    assert.deepEqual(d.simplify(ex2), empty());
+
+    const ex3 =
+      seq(
+        union(
+          dot(),
+          union(char('x'), dot())),
+        empty());
+    assert.deepEqual(d.simplify(ex3), dot());
   });
 });

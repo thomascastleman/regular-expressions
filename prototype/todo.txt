@@ -1,9 +1,5 @@
 To do.
 
-Desugaring:
-- add desugaring examples
-- write desugaring
-
 NFA:
 
 Regex API:

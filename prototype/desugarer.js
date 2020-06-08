@@ -1,5 +1,6 @@
 /*
-  desugarer.js: Desugarer for parse trees
+  desugarer.js: Reduce the set of tokens that comprise a parse tree by 
+    rewriting some in terms of others
 */
 
 const globals = require('./globals.js');
@@ -66,8 +67,9 @@ class Desugarer {
       Construct a parse tree equivalent to the one given, but 
       using only primitive tokens */
   desugar() {
-    // for the moment, apply recursive desugaring at the root of the parse tree
-    return this.desugar_token(this.tree);
+    /*  Apply recursive desugaring at the root of the parse tree,
+        and simplify the result */
+    return this.simplify(this.desugar_token(this.tree));
   }
 
   /*  Token -> SimpleToken
@@ -310,6 +312,80 @@ class Desugarer {
     for (let i = 0; i < n; i++) { copies.push(t); }
 
     return copies;
+  }
+
+  /*  SimpleToken -> SimpleToken
+      Reduce any unnecessarily complex compositions of simple tokens
+      into their simplest form. */
+  simplify(token) {
+    /*
+      Union:
+        Union(dot, dot) ==> dot
+        Union(e, e) ==> e
+
+        Union(c, dot) ==> dot (if c =/= \n)
+        Union(dot, c) ==> dot (if c =/= \n)
+
+      Sequence:
+        Sequence(e, anything) ==> anything
+        Sequence(anything, e) ==> anything
+
+        where anything is char, dot, empty
+
+      Star:
+        Star(e) ==> e
+    */
+
+    switch (token.type) {
+      case globals.UNION:
+        token.left = this.simplify(token.left);
+        token.right = this.simplify(token.right);
+
+        // if left & right are both dot or both empty, return dot or empty respectively
+        if (token.left.type == token.right.type &&
+            (token.left.type == globals.DOT ||
+            token.left.type == globals.EMPTY)) {
+          return token.left;
+        }
+
+        // if a union of dot and a non-\n char, dot will supersede
+        if ((token.left.type == globals.CHARACTER && 
+            token.left.char != '\n' &&
+            token.right.type == globals.DOT)
+            ||
+            (token.right.type == globals.CHARACTER && 
+              token.right.char != '\n' &&
+              token.left.type == globals.DOT)) {
+          return new tokens.Dot();
+        }
+
+        return token;
+
+      case globals.SEQUENCE:
+        token.left = this.simplify(token.left);
+        token.right = this.simplify(token.right);
+
+        // if either left or right expression is empty, return the other
+        if (token.left.type == globals.EMPTY) {
+          return token.right;
+        } else if (token.right.type == globals.EMPTY) {
+          return token.left;
+        } else {
+          return token;
+        }
+
+      case globals.STAR:
+        token.base = this.simplify(token.base);
+
+        if (token.base.type == globals.EMPTY) {
+          return token.base;
+        } else {
+          return token;
+        }
+
+      default:
+        return token;
+    }
   }
 
 }

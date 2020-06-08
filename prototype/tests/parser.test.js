@@ -504,6 +504,7 @@ const err_17 = "{,18}";       // lone at most
 const err_18 = "ab{10c";      // unclosed counting expr
 const err_19 = "xy{2.5}z";    // non-integer quantifier
 const err_20 = "z{4, 5}";     // whitespace in quantifier
+const err_21 = "a{-3}";       // negative quantifier
 
 describe('erroring expressions', () => {
   it('lone unary operator fails to parse', () => {
@@ -568,6 +569,11 @@ describe('erroring expressions', () => {
 
   it('whitespace in quantifier fails to parse', () => {
     const p1 = new Parser(err_20);
+    assert.throws(() => { p1.parse() });
+  });
+
+  it('negative number in quantifier fails to parse', () => {
+    const p1 = new Parser(err_21);
     assert.throws(() => { p1.parse() });
   });
 });

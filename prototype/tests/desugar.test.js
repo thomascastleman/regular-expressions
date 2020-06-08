@@ -375,11 +375,11 @@ describe('tokens affected by desugaring', () => {
   /*  Range(c_1, c_k) desugars to Union[c_1, ..., c_k]
       i.e. [a-d] ===> (a|b|c|d)
   */
-  const range_1 = range(char('a'), char('c'));
+  const range_1 = range('a', 'c');
   const range_desugar_1 = 
     union(union(char('a'), char('b')), char('c'));
 
-  const range_2 = range(char('5'), char('9'));
+  const range_2 = range('5', '9');
   const range_desugar_2 =
     union(
       union(
@@ -391,7 +391,7 @@ describe('tokens affected by desugaring', () => {
         char('8')),
       char('9'));
 
-  const range_3 = range(char('C'), char('H'));
+  const range_3 = range('C', 'H');
   const range_desugar_3 = 
     union(
       union(

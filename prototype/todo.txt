@@ -1,5 +1,10 @@
 To do.
 
 NFA:
+  - finalize representation
+  - 
 
 Regex API:
+  - recognize()
+  - match()
+  - replace()

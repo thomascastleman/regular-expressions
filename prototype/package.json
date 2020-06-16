@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha ./tests/main.test.js",
     "parse": "mocha ./tests/parser.test.js",
-    "desugar": "mocha ./tests/desugar.test.js"
+    "desugar": "mocha ./tests/desugar.test.js",
+    "NFA_construct": "mocha ./tests/NFAConstructor.test.js"
   },
   "author": "Thomas Castleman",
   "license": "ISC",

@@ -1,5 +1,9 @@
 To do.
 
+NFA Constructor:
+  - tests
+  - write all the functions
+
 NFA:
   - finalize representation
   - 

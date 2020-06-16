@@ -5,11 +5,10 @@
 
 class NFA {
 
-  constructor() {
-    this.num_states;
-    this.start_state;
-    this.accepts;
-    this.transitions;
+  constructor(_start, _accepts, _states) {
+    this.start = _start;
+    this.accepts = _accepts;
+    this.states = _states;
   }
 
   /*  State -> Boolean
@@ -18,10 +17,9 @@ class NFA {
 
   }
 
-  /*  State Character -> List<State>
-      Produces a list of all states that can be reached from the
-      given state by reading character sym */
-  transition(state, sym) {
+  /*  List<State> -> Boolean
+      Determine if a list of states contains at least one accept */
+  contains_accept_state(states) {
 
   }
 
@@ -35,12 +33,14 @@ class NFA {
 
       while queue is not empty:
         current = pop state off the queue
-        add current to reached
+
+        if current in reached
+          continue loop
+        else: 
+          add current to reached
 
         for st in transition(current, EPSILON)
-          if st in reached:
-            error or don't add to queue
-          else:
+          if st NOT in reached:
             add to queue
       
       return reached
@@ -49,14 +49,38 @@ class NFA {
 
 }
 
-/*  Represents a transition from one state to a set of other 
-    states given a character*/
-class Transition {
-  constructor(_state, _symbol, _next) {
-    this.state = _state;
-    this.symbol = _symbol;
-    this.next = _next;
+
+class State {
+
+  constructor() {
+    /*  id :: Integer
+        Unique ID defined later when NFA represents complete expression,
+        not sub-expression (because reassigning IDs during NFA 
+        construction would be cumbersome) */
+    this.id;
+
+    /*  transitions :: (Char -> List<State>)
+        Mapping that encodes which states to move to
+        if a given character literal is read */
+    this.transitions = {};
+
+    /*  epsilons :: List<State>
+        States that are directly connected to this state
+        by an epsilon transition */
+    this.epsilons = [];
+
+    /*  dots :: List<State>
+        States directly connected to this state
+        by a dot character transition */
+    this.dots = [];
   }
+
+  /*  Integer -> 
+      Set the value of this state's identity */
+  set_id(id) {
+    this.id = id;
+  }
+
 }
 
-module.exports = NFA;
+module.exports = { NFA, State };

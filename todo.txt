@@ -5,8 +5,8 @@ NFA Constructor:
   - write all the functions
 
 NFA:
-  - finalize representation
-  - 
+  - test methods
+  - implement methods
 
 Regex API:
   - recognize()

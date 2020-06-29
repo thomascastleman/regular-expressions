@@ -9,12 +9,13 @@ class NFA {
     this.start = _start;
     this.accepts = _accepts;
     this.states = _states;
+    this.accept_ids;
   }
 
   /*  State -> Boolean
       Determines if a given state is an accept state */
   is_accept_state(state) {
-
+    return this.accept_ids.has(state.id);
   }
 
   /*  List<State> -> Boolean
@@ -73,12 +74,6 @@ class State {
         States directly connected to this state
         by a dot character transition */
     this.dots = [];
-  }
-
-  /*  Integer -> 
-      Set the value of this state's identity */
-  set_id(id) {
-    this.id = id;
   }
 
 }

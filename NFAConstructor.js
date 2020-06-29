@@ -19,15 +19,33 @@ class NFAConstructor {
       in the parse tree */
   construct() {
     const fullNFA = this.treeToNFA(this.tree);
-    const readyForSimulation = this.optimizeForSimulation(fullNFA);
-    return readyForSimulation;
+    const withIDs = this.addIDs(fullNFA);
+    return withIDs;
   }
 
   /*  NFA -> NFA
-      Add numeric IDs to nodes, update recognizer of accept states
-      to use these IDs for better performance */
-  optimizeForSimulation(nfa) {
+      Add numeric IDs to nodes, so accept state checker can use these 
+      IDs for better performance. IDs are added *after* the full NFA
+      has been constructed so we don't need to keep updating the ID schemes
+      of sub-NFAs to prevent ID conflicts. */
+  addIDs(nfa) {
+    /* this set of IDs of accepting states will be used in simulation to 
+    efficiently check for accepting states */
+    nfa.accept_ids = new Set();
 
+    let s;
+    for (let i = 0; i < nfa.states.length; i++) {
+      s = nfa.states[i];
+
+      s.id = i; // set the ID
+
+      // if accepting state, add its ID to set of accepting IDs
+      if (nfa.accepts.includes(s)) {
+        nfa.accept_ids.add(s.id);
+      }
+    }
+
+    return nfa;
   }
 
   /*  ParseTree -> NFA
@@ -109,7 +127,7 @@ class NFAConstructor {
     // NFA starting at new state and accepting if either sub-NFA accepts
     return new NFA(new_start,
                   left.accepts.concat(right.accepts),
-                  left.states.concat(right.states));
+                  left.states.concat(right.states).concat([new_start]));
   }
 
   /*  NFA NFA -> NFA

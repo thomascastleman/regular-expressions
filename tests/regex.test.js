@@ -3,3 +3,16 @@
 */
 
 const assert = require('assert');
+const RegularExpression = require('../regex.js');
+
+describe('recognize() tests', () => {
+
+});
+
+describe('matches() tests', () => {
+
+});
+
+describe('replace() tests', () => {
+
+});

@@ -1,14 +1,9 @@
 To do.
 
-NFA Constructor:
+Regular expressions:
   - tests
-  - write all the functions
-
-NFA:
-  - test methods
-  - implement methods
-
-Regex API:
   - recognize()
   - match()
   - replace()
+
+Create library of examples

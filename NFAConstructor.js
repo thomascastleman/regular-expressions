@@ -1,6 +1,5 @@
 /*
-  NFAConstructor.js: Builds an NFA from a parse tree, then optimizes
-  it for simulation
+  NFAConstructor.js: Builds an NFA from a parse tree
 */
 
 const globals = require('./globals.js');
@@ -153,7 +152,6 @@ class NFAConstructor {
     // construct new start state, make accept
     const new_start = new State();
     base.accepts.push(new_start);
-    base.states.push(new_start);
 
     // add epsilons from every accept state to the original start
     for (let i = 0; i < base.accepts.length; i++) {
@@ -162,7 +160,7 @@ class NFAConstructor {
 
     return new NFA(new_start,
                   base.accepts,
-                  base.states);
+                  base.states.concat([new_start]));
   }
 
 }

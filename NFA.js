@@ -21,31 +21,37 @@ class NFA {
   /*  List<State> -> Boolean
       Determine if a list of states contains at least one accept */
   contains_accept_state(states) {
-
+    const acceptSoFar = (acc, cur) => this.is_accept_state(cur) || acc;
+    return states.reduce(acceptSoFar, false);
   }
 
   /*  List<State> -> List<State>
       Expands a list of states to include any states that are
       reachable by following any number of epsilon transitions */
   follow_epsilon(states) {
-    /*
-      queue = states
-      reached = []
+    const queue = states;
+    const reached = [];
+    let current, reachable, i;
 
-      while queue is not empty:
-        current = pop state off the queue
+    // while there are states left to explore
+    while (queue.length > 0) {
+      current = queue.shift();
 
-        if current in reached
-          continue loop
-        else: 
-          add current to reached
+      // if not already explored
+      if (!reached.includes(current)) {
+        reached.push(current);
 
-        for st in transition(current, EPSILON)
-          if st NOT in reached:
-            add to queue
-      
-      return reached
-    */
+        // add unexplored states neighboring current via epsilon to queue
+        for (i = 0; i < current.epsilons.length; i++) {
+          reachable = current.epsilons[i];
+
+          if (!reached.includes(reachable))
+            queue.push(reachable);
+        }
+      }
+    }
+
+    return reached;
   }
 
 }

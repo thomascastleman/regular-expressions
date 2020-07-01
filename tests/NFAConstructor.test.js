@@ -138,7 +138,7 @@ describe('unit tests for combining NFAs', () => {
   });
 });
 
-describe('full NFA from parse tree', () => {
+describe('NFA from parse tree', () => {
   const nfac = new NFAConstructor(empty());
 
   it('non-nested: character tree', () => {
@@ -219,31 +219,62 @@ describe('full NFA from parse tree', () => {
 
 });
 
-describe('adding IDs to NFA, post-construction', () => {
-
+describe('adding IDs to NFA states/full construction', () => {
   nfac = new NFAConstructor(empty());
 
-  it('single-state NFA', () => {
-    const nfa = emptyRec();
-    const withIDs = nfac.addIDs(nfa);
+  it('simple NFAs', () => {
+    // empty tree
+    const tree1 = empty();
+    const nfa1 = emptyRec();
+    const withIDs1 = nfac.addIDs(nfa1);
 
-    // check the singular ID as well as set of accept IDs
-    assert.equal(withIDs.states[0].id, 0);
-    assert.deepEqual(withIDs.accept_ids, new Set([0]));
+    assert.deepEqual(withIDs1.states.map(s => s.id), [0]);
+    assert.deepEqual(withIDs1.accept_ids, new Set([0]));
+    assert.deepEqual(withIDs1, new NFAConstructor(tree1).construct());
+
+    // single-char recognizer
+    const tree2 = char('B');
+    const nfa2 = charRec('B');
+    const withIDs2 = nfac.addIDs(nfa2);
+
+    assert.deepEqual(withIDs2.states.map(s => s.id), [0,1]);
+    assert.deepEqual(withIDs2.accept_ids, new Set([1]));
+    assert.deepEqual(withIDs2, new NFAConstructor(tree2).construct());
+
+    // dot recognizer
+    const tree3 = dot();
+    const nfa3 = dotRec();
+    const withIDs3 = nfac.addIDs(nfa3);
+
+    assert.deepEqual(withIDs3.states.map(s => s.id), [0,1]);
+    assert.deepEqual(withIDs3.accept_ids, new Set([1]));
+    assert.deepEqual(withIDs3, new NFAConstructor(tree3).construct());
   });
 
   it('more complex NFAs', () => {
     // x|yz
-    const nfa1 = nfac.treeToNFA(union(char('x'), seq(char('y'), char('z'))));
+    const tree1 = union(char('x'), seq(char('y'), char('z')));
+    const nfa1 = nfac.treeToNFA(tree1);
     const withIDs1 = nfac.addIDs(nfa1);
     assert.deepEqual(withIDs1.states.map(s => s.id), [0,1,2,3,4,5,6]);
     assert.deepEqual(withIDs1.accept_ids, new Set([1, 5]));
+    assert.deepEqual(withIDs1, new NFAConstructor(tree1).construct());
 
-    // ...
+    // (a(b|))*
+    const tree2 = star(seq(char('a'), union(char('b'), empty())));
+    const nfa2 = nfac.treeToNFA(tree2);
+    const withIDs2 = nfac.addIDs(nfa2);
+    assert.deepEqual(withIDs2.states.map(s => s.id), [0,1,2,3,4,5,6]);
+    assert.deepEqual(withIDs2.accept_ids, new Set([3,4,6]));
+    assert.deepEqual(withIDs2, new NFAConstructor(tree2).construct());
+
+    // ((a|.)(|b))*
+    const tree3 = star(seq(union(char('a'), dot()), union(empty(), char('b'))));
+    const nfa3 = nfac.treeToNFA(tree3);
+    const withIDs3 = nfac.addIDs(nfa3);
+    assert.deepEqual(withIDs3.states.map(s => s.id), [0,1,2,3,4,5,6,7,8,9]);
+    assert.deepEqual(withIDs3.accept_ids, new Set([5,7,9]));
+    assert.deepEqual(withIDs3, new NFAConstructor(tree3).construct());
   });
 
 });
-
-// describe('full NFA construction', () => {
-
-// });

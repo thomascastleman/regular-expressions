@@ -120,7 +120,7 @@ class Parser {
   }
 
   /*  char -> bool
-      Determines if a character represents a digt 0-9 */
+      Determines if a character represents a digit 0-9 */
   is_digit(c) {
     return  c == '0' ||
             c == '1' ||

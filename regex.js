@@ -26,7 +26,7 @@ class RegularExpression {
         current = follow_epsilon(next)
         if current is empty: reject
 
-      if ormap(is_accept_state, current) is true
+      if current contains accept state
         accept
       else:
         reject

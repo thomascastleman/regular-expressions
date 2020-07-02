@@ -4,8 +4,8 @@
 */
 
 const assert = require('assert');
-const { NFA, State } = require('../NFA.js');
-const NFAConstructor = require('../NFAConstructor.js');
+const { NFA, State } = require('../src/NFA.js');
+const NFAConstructor = require('../src/NFAConstructor.js');
 const { union, seq, star, char, dot, empty } = require('./globals.test.js');
 
 // helper to construct an NFA that recognizes a single character

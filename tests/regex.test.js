@@ -3,7 +3,7 @@
 */
 
 const assert = require('assert');
-const RegularExpression = require('../regex.js');
+const RegularExpression = require('../src/regex.js');
 
 describe('recognize() tests', () => {
 

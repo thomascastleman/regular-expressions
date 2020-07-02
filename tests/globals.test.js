@@ -2,7 +2,7 @@
   globals.test.js: Globals specifically for testing purposes
 */
 
-const tokens = require('../tokens.js');
+const tokens = require('../src/tokens.js');
 
 /*  Abbreviated constructors for tokens, which make creating
     test data for parsing/desugaring/NFA construction less verbose */

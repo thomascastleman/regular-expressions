@@ -3,7 +3,7 @@
 */
 
 const assert = require('assert');
-const Desugarer = require('../desugarer.js');
+const Desugarer = require('../src/desugarer.js');
 const {
   union, seq, star, plus, q, charseq, range, char, dot, empty,
   digit, word, whitespace, exact, rangequant, atleast, atmost

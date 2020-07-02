@@ -3,7 +3,7 @@
 */
 
 const assert = require('assert');
-const { NFA, State } = require('../NFA.js');
+const { NFA, State } = require('../src/NFA.js');
 
 /*  Number List<Number> -> NFA
     Generate an empty (no transitions, etc) NFA with n

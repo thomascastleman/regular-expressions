@@ -3,7 +3,7 @@
 */
 
 const assert = require('assert');
-const Parser = require('../parser.js');
+const Parser = require('../src/parser.js');
 const {
   union, seq, star, plus, q, charseq, range, char, dot, empty,
   digit, word, whitespace, exact, rangequant, atleast, atmost

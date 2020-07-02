@@ -1,7 +1,7 @@
 {
-  "name": "regex-prototype",
+  "name": "regular-expressions",
   "version": "1.0.0",
-  "description": "Prototype implementation of a regex engine",
+  "description": "Simple NFA-based regular expressions engine",
   "main": "main.js",
   "scripts": {
     "test": "mocha ./tests/main.test.js",

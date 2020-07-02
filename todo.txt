@@ -1,7 +1,5 @@
 To do.
 
-Make /src directory
-
 Regular expressions:
   - tests
   - recognize()

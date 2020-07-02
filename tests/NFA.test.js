@@ -27,6 +27,63 @@ function empty_NFA(n, accept_ids) {
   return nfa;
 }
 
+describe('transition', () => {
+  it('follows transitions & dots', () => {
+    const nfa1 = empty_NFA(5, [4]);
+    const s1 = nfa1.states;
+  
+    s1[0].transitions['a'] = [s1[1], s1[2]];
+    s1[0].transitions['Y'] = [s1[3]];
+    s1[0].dots = [s1[4]];
+  
+    assert.deepEqual(
+      nfa1.transition(s1[0], 'x'),
+      [s1[4]]); // only dot
+    assert.deepEqual(
+      nfa1.transition(s1[0], 'a'),
+      [s1[1], s1[2], s1[4]]);
+    assert.deepEqual(
+      nfa1.transition(s1[0], 'Y'),
+      [s1[3], s1[4]]);
+  });
+
+  it('only dots', () => {
+    const nfa = empty_NFA(4, [1,2,3]);
+    const s = nfa.states;
+
+    s[0].dots = [s[1], s[2], s[3]];
+
+    assert.deepEqual(nfa.transition(s[0], '7'), [s[1], s[2], s[3]]);
+    assert.deepEqual(nfa.transition(s[0], '\n'), []); // . doesn't match \n
+  });
+
+  it('basic transitions', () => {
+    const nfa = empty_NFA(6, [5]);
+    const s = nfa.states;
+
+    s[0].transitions['*'] = [s[1], s[3]];
+    s[0].transitions['E'] = [s[2]];
+    s[2].transitions['j'] = [s[4], s[5]];
+
+    assert.deepEqual(
+      nfa.transition(s[0], '*'),
+      [s[1], s[3]]);
+    assert.deepEqual(
+      nfa.transition(s[0], 'E'),
+      [s[2]]);
+    assert.deepEqual(
+      nfa.transition(s[0], 'j'),
+      []);
+    
+    assert.deepEqual(
+      nfa.transition(s[2], 'j'),
+      [s[4], s[5]]);
+    assert.deepEqual(
+      nfa.transition(s[2], 'U'),
+      []);
+  });
+});
+
 describe('accept-state checking with numeric IDs', () => {
   it('is_accept_state returns true on accept states & false otherwise', () => {
     const nfa = empty_NFA(6, [0, 3, 4]);

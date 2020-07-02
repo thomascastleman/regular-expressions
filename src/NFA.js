@@ -12,6 +12,20 @@ class NFA {
     this.accept_ids;
   }
 
+  /*  State Character -> List<State>
+      Determine all states that can be reached from the given state
+      by reading char off the input stream (includes literals/dots, but
+      not epsilon transitions) */
+  transition(state, char) {
+    let next = state.transitions[char] || [];
+
+    // follow all . transitions if this char isn't \n
+    if (char != '\n')
+      next = next.concat(state.dots);
+
+    return next;
+  }
+
   /*  State -> Boolean
       Determines if a given state is an accept state */
   is_accept_state(state) {

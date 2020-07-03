@@ -1,7 +1,9 @@
 To do.
 
+NFA:
+  - fix is_accept
+
 Regular expressions:
-  - tests
   - recognize()
   - match()
   - replace()

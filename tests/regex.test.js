@@ -462,14 +462,176 @@ describe('recognize: more complex expressions', () => {
     assert.equal(re.recognize('A&&&&&'), false);
   });
 
-  // ...
+  it('$([0-9,]+)?[.][0-9]+', () => {
+    // adapted from Google
+    const re = new RE('$([0-9,]+)?[.][0-9]+');
+
+    assert.equal(re.recognize('$4.666'), true);
+    assert.equal(re.recognize('$17.86'), true);
+    assert.equal(re.recognize('$7.76'), true);
+    assert.equal(re.recognize('$.54'), true);
+    assert.equal(re.recognize('$900,001.00'), true);
+    assert.equal(re.recognize('$523,877,231.56'), true);
+
+    assert.equal(re.recognize('5.41'), false);
+    assert.equal(re.recognize('.'), false);
+    assert.equal(re.recognize('$2.31.00'), false);
+    assert.equal(re.recognize('$ab.xy'), false);
+  });
+
+  it('[0-9]{5}(-[0-9]{4})?', () => {
+    // adapted from Google
+    const re = new RE('[0-9]{5}(-[0-9]{4})?');
+
+    assert.equal(re.recognize('55401'), true);
+    assert.equal(re.recognize('82773-4401'), true);
+    assert.equal(re.recognize('56670'), true);
+    assert.equal(re.recognize('11382-3655'), true);
+    assert.equal(re.recognize('4481'), false);
+    assert.equal(re.recognize('91882-303'), false);
+    assert.equal(re.recognize('77871-45001'), false);
+  });
+
+  it('\\d{1,2}/\\d{1,2}/(\\d{4}|\\d{2})', () => {
+    // date format
+    const re = new RE('\\d{1,2}/\\d{1,2}/(\\d{4}|\\d{2})');
+
+    assert.equal(re.recognize('6/7/2020'), true);
+    assert.equal(re.recognize('12/21/98'), true);
+    assert.equal(re.recognize('1/05/1958'), true);
+    assert.equal(re.recognize('03/04/2023'), true);
+    assert.equal(re.recognize('2/4/12'), true);
+    assert.equal(re.recognize('111/10/2013'), false);
+    assert.equal(re.recognize('7/00005/2021'), false);
+    assert.equal(re.recognize('12/1/210000'), false);
+    assert.equal(re.recognize('1//2015'), false);
+    assert.equal(re.recognize('4//99'), false);
+  });
+
+  it('(a|b)cd*e+f?[ghi][j-l].\\d\\w\\sm{2}n{3,5}o{3,}p{,2}', () => {
+    // every possible token
+    const re = new RE('(a|b)cd*e+f?[ghi][j-l].\\d\\w\\sm{2}n{3,5}o{3,}p{,2}');
+
+    assert.equal(re.recognize('bceefhk&4U mmnnnnooooop'), true);
+    assert.equal(re.recognize('acdddddegl-0e\nmmnnnooopp'), true);
+    assert.equal(re.recognize('acdeeeeeeijL5y\tmmnnnoooooooo'), true);
+    assert.equal(re.recognize('bceefhk&4U mnnnnooooop'), false); // not enough m's
+    assert.equal(re.recognize('xceefhk&4U mmnnnnooooop'), false); // wrong first char
+    assert.equal(re.recognize('aceefhk\n4U mmnnnnooooop'), false); // . doesn't match \n
+  });
 
 });
 
 describe('matches: tests', () => {
 
+  it('no matches', () => {
+    const re = new RE('%{5}');
+    const text = "Normal text here, not five %'s in a row.";
+
+    assert.deepEqual(
+      re.matches(text),
+      []);
+  });
+
+  it('extracts literals', () => {
+    const re1 = new RE('literal');
+    const text1 = "This literal is a literal, there are literals here.";
+
+    assert.deepEqual(
+      re1.matches(text1),
+      [match(5, 12, "literal"),
+      match(18, 25, "literal"),
+      match(37, 44, "literal")]);
+
+    const re2 = new RE('f');
+    const text2 = "Not 'F', but 'f'";
+
+    assert.deepEqual(
+      re2.matches(text2),
+      [match(14, 15, "f")]);
+  });
+
+  it('extracts numbers', () => {
+    const re = new RE('[0-9]+');
+    const text = 
+      "First number: 700, second number is 3, and the third is 189203. " + 
+      "The fourth is 157 and finally, 17.";
+
+    assert.deepEqual(
+      re.matches(text),
+      [match(14, 17, "700"),
+      match(36, 37, "3"),
+      match(56, 62, "189203"),
+      match(78, 81, "157"),
+      match(95, 97, "17")]);
+  });
+
+  it('extracts capitalized words', () => {
+    const re = new RE('[A-Z]\\w*');
+    const text = "The first word is Capitalized, but (some) others are Not.";
+
+    assert.deepEqual(
+      re.matches(text),
+      [match(0, 3, "The"),
+      match(18, 29, "Capitalized"),
+      match(53, 56, "Not")]);
+  });
+
+  it('extracts newlines', () => {
+    const re = new RE('\n');
+    const text = "First line.\nSecond line.\nThird line...\n";
+
+    assert.deepEqual(
+      re.matches(text),
+      [match(11, 12, "\n"),
+      match(24, 25, "\n"),
+      match(38, 39, "\n")]);
+  });
+
 });
 
 describe('replace: tests', () => {
+
+  it('replaces literals', () => {
+    const re = new RE('the');
+    const text = "Replace the word 'the' in the text";
+
+    assert.equal(
+      re.replace(text, "XYZ"),
+      "Replace XYZ word 'XYZ' in XYZ text");
+    assert.equal(
+      re.replace(text, ""),
+      "Replace  word '' in  text");
+    assert.equal(
+      re.replace(text, "\n"),
+      "Replace \n word '\n' in \n text");
+  });
+
+  it('no matches for replacement', () => {
+    const re = new RE('not here');
+    const text = "This text doesn't contain the above expression.";
+
+    assert.equal(
+      re.replace(text, "000"),
+      text);
+  });
+
+  it('redact hex digits', () => {
+    const re = new RE('0x[A-Fa-f0-9]+');
+    const text = "Address 1: 0xaff6, address 2: 0x5FC7, and finally 0x0041";
+
+    assert.equal(
+      re.replace(text, "______"),
+      "Address 1: ______, address 2: ______, and finally ______");
+  });
+
+  it('replaces capitalized words', () => {
+    const re = new RE('[A-Z]\\w*');
+    const text = "Some of these Words are Capitalized.";
+
+    assert.equal(
+      re.replace(text, "_"),
+      "_ of these _ are _.");
+  });
 
 });

@@ -7,25 +7,26 @@ const assert = require('assert');
 const { NFA, State } = require('../src/NFA.js');
 const NFAConstructor = require('../src/NFAConstructor.js');
 const { union, seq, star, char, dot, empty } = require('./globals.test.js');
+const { set_union } = require('../src/globals.js');
 
 // helper to construct an NFA that recognizes a single character
 function charRec(c) {
   const st = new State(), acc = new State();
   st.transitions[c] = [acc];
-  return new NFA(st, [acc], [st, acc]);
+  return new NFA(st, new Set([acc]), [st, acc]);
 }
 
 // helper to construct NFA that recognizes the dot char
 function dotRec() {
   const st = new State(), acc = new State();
   st.dots = [acc];
-  return new NFA(st, [acc], [st, acc]);
+  return new NFA(st, new Set([acc]), [st, acc]);
 }
 
 // helper to construct NFA that recognizes empty string
 function emptyRec() {
   const st = new State();
-  return new NFA(st, [st], [st]);
+  return new NFA(st, new Set([st]), [st]);
 }
 
 describe('unit tests for combining NFAs', () => {
@@ -55,7 +56,7 @@ describe('unit tests for combining NFAs', () => {
     const new_start1 = new State();
     new_start1.epsilons = [l1.start, r1.start];
     const nfa1 = new NFA(new_start1, 
-                        l1.accepts.concat(r1.accepts), 
+                        set_union(l1.accepts, r1.accepts), 
                         l1.states.concat(r1.states).concat(new_start1));
 
     assert.deepEqual(nfa1, nfac.makeUnion(l1, r1));
@@ -67,7 +68,7 @@ describe('unit tests for combining NFAs', () => {
     const new_start2 = new State();
     new_start2.epsilons = [l2.start, r2.start];
     const nfa2 = new NFA(new_start2, 
-                        l2.accepts.concat(r2.accepts), 
+                        set_union(l2.accepts, r2.accepts), 
                         l2.states.concat(r2.states).concat(new_start2));
 
     assert.deepEqual(nfa2, nfac.makeUnion(l2, r2));
@@ -80,7 +81,8 @@ describe('unit tests for combining NFAs', () => {
 
     // sequenced NFA
     const l1_copy = Object.assign({}, l1);
-    l1_copy.accepts[0].epsilons = [r1.start];
+    for (let acc of l1_copy.accepts)
+      acc.epsilons = [r1.start];
 
     const nfa1 = new NFA(l1.start,
                         r1.accepts,
@@ -94,7 +96,8 @@ describe('unit tests for combining NFAs', () => {
 
     // sequenced NFA
     const l2_copy = Object.assign({}, l2);
-    l2_copy.accepts[0].epsilons = [r2.start];
+    for (let acc of l2_copy.accepts)
+      acc.epsilons = [r2.start];
 
     const nfa2 = new NFA(l2.start,
                         r2.accepts,
@@ -112,11 +115,15 @@ describe('unit tests for combining NFAs', () => {
 
     const new_start1 = new State();
     new_start1.epsilons = [starred1.start];
-    starred1.accepts[0].epsilons = [starred1.start];
+    for (let acc of starred1.accepts)
+      acc.epsilons = [starred1.start];
+
+    const new_acc1 = starred1.accepts.add(new_start1);
+    const new_states1 = starred1.states.concat([new_start1]);
 
     const starNFA1 = new NFA(new_start1, 
-                            [starred1.accepts[0], new_start1], 
-                            [starred1.start, starred1.accepts[0], new_start1]);
+                            new_acc1,
+                            new_states1);
 
     assert.deepEqual(starNFA1, nfac.makeStar(b1));
 
@@ -128,11 +135,15 @@ describe('unit tests for combining NFAs', () => {
 
     const new_start2 = new State();
     new_start2.epsilons = [starred2.start];
-    starred2.accepts[0].epsilons = [starred2.start];
+    for (let acc of starred2.accepts)
+      acc.epsilons = [starred2.start];
+
+    const new_acc2 = starred2.accepts.add(new_start2);
+    const new_states2 = starred2.states.concat([new_start2]);
 
     const starNFA2 = new NFA(new_start2, 
-                            [starred2.accepts[0], new_start2], 
-                            [starred2.start, starred2.accepts[0], new_start2]);
+                            new_acc2,
+                            new_states2);
 
     assert.deepEqual(starNFA2, nfac.makeStar(b2));
   });

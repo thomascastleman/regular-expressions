@@ -125,14 +125,13 @@ describe('recognize: unit tests for each token', () => {
   });
 
   it('recognizes \\s as whitespace', () => {
-    // [ \t\r\n\v\f]
+    // [ \t\r\n\f]
     const re = new RE('\\s');
 
     assert.equal(re.recognize(' '), true);
     assert.equal(re.recognize('\t'), true);
     assert.equal(re.recognize('\r'), true);
     assert.equal(re.recognize('\n'), true);
-    assert.equal(re.recognize('\v'), true);
     assert.equal(re.recognize('\f'), true);
 
     assert.equal(re.recognize('a'), false);

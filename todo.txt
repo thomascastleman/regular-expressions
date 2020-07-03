@@ -1,7 +1,6 @@
 To do.
 
 Regular expressions:
-  - recognize()
   - match()
   - replace()
 

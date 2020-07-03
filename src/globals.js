@@ -23,6 +23,17 @@ module.exports = {
   EXACT_QUANTIFIER : 13,
   RANGE_QUANTIFIER : 14,
   AT_LEAST_QUANTIFIER : 15,
-  AT_MOST_QUANTIFIER : 16
+  AT_MOST_QUANTIFIER : 16,
 
+  set_union: set_union
+
+}
+
+// thank you https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+function set_union(setA, setB) {
+  let _union = new Set(setA)
+  for (let elem of setB) {
+      _union.add(elem)
+  }
+  return _union
 }

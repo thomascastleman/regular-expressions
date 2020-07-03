@@ -2,12 +2,23 @@
   regex.js: Regular expressions API
 */
 
+const Parser = require('./parser.js');
+const Desugarer = require('./desugarer.js');
+const NFAConstructor = require('./NFAConstructor.js');
+
 class RegularExpression {
 
+  /*  String -> 
+      Parse the given expression string, desugar the parse tree, and
+      construct an NFA that simulates the expression. */
   constructor(_expr) {
     this.expr = _expr;
 
-    // parse, desugar, construct NFA
+    const parsed = new Parser(this.expr).parse();
+    const desugared = new Desugarer(parsed).desugar();
+    const nfa = new NFAConstructor(desugared).construct();
+
+    this.nfa = nfa;
   }
 
   /*  String -> Boolean
@@ -15,22 +26,29 @@ class RegularExpression {
       simulating the NFA representation of this expr on the input 
       ends in an accept state, return true, otherwise false. */
   recognize(str) {
-    /*
-      current = follow_epsilon( [start_state] )
+    /* immediately follow any epsilon arrows from start state--use
+    this as the starting set */
+    let current = this.nfa.follow_epsilon([this.nfa.start]);
+    let i, j, c, next;
 
-      for c in str:
-        next = []
-        for state in current
-          add transition(state, c) to next (add all elts, big union)
-        
-        current = follow_epsilon(next)
-        if current is empty: reject
+    // for each char in input stream
+    for (i = 0; i < str.length; i++) {
+      c = str[i];
 
-      if current contains accept state
-        accept
-      else:
-        reject
-    */
+      // find all states reachable from current set by reading char c
+      next = [];
+      for (j = 0; j < current.length; j++)
+        next = next.concat(this.nfa.transition(current[j], c));
+      
+      // extend set to include states reachable by epsilon arrows
+      current = this.nfa.follow_epsilon(next);
+
+      // no states could be transitioned to, reject
+      if (current.length == 0) return false;
+    }
+
+    // having reached end of input, if NFA in at least 1 accepting state, accept
+    return this.nfa.contains_accept_state(current);
   }
 
   /*  String -> List<Match>

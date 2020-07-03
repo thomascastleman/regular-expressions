@@ -65,7 +65,7 @@ class NFAConstructor {
   makeCharRecognizer(c) {
     const start = new State(), acc = new State();
     start.transitions[c] = [acc]; // start transitions to accept, reading char c
-    return new NFA(start, [acc], [start, acc]);
+    return new NFA(start, new Set([acc]), [start, acc]);
   }
 
   /*  -> NFA 
@@ -74,7 +74,7 @@ class NFAConstructor {
   makeDotRecognizer() {
     const start = new State(), acc = new State();
     start.dots = [acc]; // start transitions to accept, reading anything but \n
-    return new NFA(start, [acc], [start, acc]);
+    return new NFA(start, new Set([acc]), [start, acc]);
   }
 
   /*  -> NFA 
@@ -82,7 +82,7 @@ class NFAConstructor {
   makeEmptyRecognizer() {
     // single state, both start and accept
     const start_acc = new State();
-    return new NFA(start_acc, [start_acc], [start_acc]);
+    return new NFA(start_acc, new Set([start_acc]), [start_acc]);
   }
 
   /*  ####################################################################
@@ -98,7 +98,7 @@ class NFAConstructor {
 
     // NFA starting at new state and accepting if either sub-NFA accepts
     return new NFA(new_start,
-                  left.accepts.concat(right.accepts),
+                  globals.set_union(left.accepts, right.accepts),
                   left.states.concat(right.states).concat([new_start]));
   }
 
@@ -107,8 +107,8 @@ class NFAConstructor {
       respectively, construct an NFA that recognizes the sequence */
   makeSequence(left, right) {
     // add an epsilon from every left accept state to the right start state
-    for (let i = 0; i < left.accepts.length; i++) {
-      left.accepts[i].epsilons.push(right.start);
+    for (let acc of left.accepts) {
+      acc.epsilons.push(right.start);
     }
 
     // NFA starting at left, accepting at right, with all states in between
@@ -124,11 +124,11 @@ class NFAConstructor {
   makeStar(base) {
     // construct new start state, make accept
     const new_start = new State();
-    base.accepts.push(new_start);
+    base.accepts.add(new_start);
 
     // add epsilons from every accept state to the original start
-    for (let i = 0; i < base.accepts.length; i++) {
-      base.accepts[i].epsilons.push(base.start);
+    for (let acc of base.accepts) {
+      acc.epsilons.push(base.start);
     }
 
     return new NFA(new_start,

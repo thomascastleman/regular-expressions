@@ -7,24 +7,24 @@ const { NFA, State } = require('../src/NFA.js');
 
 /*  Number List<Number> -> NFA
     Generate an empty (no transitions, etc) NFA with n
-    states, and the accept states as indicated */
-function empty_NFA(n, accept_ids) {
-  const states = [], accepts = [];
+    states, and the accept states as indicated by the 
+    indices in accept_idx */
+function empty_NFA(n, accept_idx) {
+  const states = [], accepts = new Set();
+  let s, start;
 
   for (let i = 0; i < n; i++) {
-    states.push(new State());
-    states[i].id = i;
+    s = new State();
+    states.push(s);
 
-    if (accept_ids.includes(i)) {
-      accepts.push(states[i]);
-    }
+    if (accept_idx.includes(i))
+      accepts.add(s);
+
+    if (i == 0) start = s;
   }
 
-  // choose 0 as start state
-  const nfa = new NFA(states[0], accepts, states);
-  nfa.accept_ids = new Set(accept_ids);
-
-  return nfa;
+  // choose 0th state as start
+  return new NFA(start, accepts, states);
 }
 
 describe('transition', () => {

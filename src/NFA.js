@@ -6,10 +6,9 @@
 class NFA {
 
   constructor(_start, _accepts, _states) {
-    this.start = _start;
-    this.accepts = _accepts;
-    this.states = _states;
-    this.accept_ids;
+    this.start = _start;      // State
+    this.accepts = _accepts;  // Set<State>
+    this.states = _states;    // List<State>
   }
 
   /*  State Character -> List<State>
@@ -29,7 +28,7 @@ class NFA {
   /*  State -> Boolean
       Determines if a given state is an accept state */
   is_accept_state(state) {
-    return this.accept_ids.has(state.id);
+    return this.accepts.has(state);
   }
 
   /*  List<State> -> Boolean
@@ -74,12 +73,6 @@ class NFA {
 class State {
 
   constructor() {
-    /*  id :: Integer
-        Unique ID defined later when NFA represents complete expression,
-        not sub-expression (because reassigning IDs during NFA 
-        construction would be cumbersome) */
-    this.id;
-
     /*  transitions :: (Char -> List<State>)
         Mapping that encodes which states to move to
         if a given character literal is read */

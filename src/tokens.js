@@ -122,7 +122,7 @@ class Word {
 }
 
 /*  Represents whitespace including spaces, tabs, newlines, etc. 
-    concretely, "\s" or "[ \t\r\n\v\f]"   */
+    concretely, "\s" or "[ \t\r\n\f]"   */
 class Whitespace {
   constructor() {
     this.type = globals.WHITESPACE;

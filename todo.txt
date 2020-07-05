@@ -1,5 +1,3 @@
 To do.
 
-Create library of examples
-
 Documentation

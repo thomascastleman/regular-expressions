@@ -587,6 +587,18 @@ describe('matches: tests', () => {
       match(38, 39, "\n")]);
   });
 
+  it('empty expression matches between chars', () => {
+    const re = new RE('');
+    const text = "test";
+
+    assert.deepEqual(
+      re.matches(text),
+      [match(0, 0, ""),
+      match(1, 1, ""),
+      match(2, 2, ""),
+      match(3, 3, "")]);
+  });
+
 });
 
 describe('replace: tests', () => {

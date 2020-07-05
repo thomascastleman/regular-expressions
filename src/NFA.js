@@ -11,6 +11,48 @@ class NFA {
     this.states = _states;    // List<State>
   }
 
+  /*  Where Option<Number> is one of:
+        - Number
+        - null
+
+      String Number -> Option<Number>
+      Simulate the NFA on an input string, starting at index start,
+      and return the index of the end of the longest match. If no
+      matches, return null. */
+  simulate(str, start) {
+    if (start > str.length || start < 0)
+      throw new Error(`simulate: start index ${start} out of bounds`);
+
+    let current = [this.start]; // {start} as starting set of states
+    let next;
+    let max_accept = null;
+
+    // for each char in input stream, starting from start idx
+    for (let i = start; i <= str.length; i++) {
+      // extend set to include states reachable by epsilon arrows
+      current = this.follow_epsilon(current);
+
+      // if this is an accepting configuration, record it
+      if (this.contains_accept_state(current))
+        max_accept = i;
+
+      // if chars left to read
+      if (i < str.length) {
+        // find all states reachable from current set by reading next char
+        next = [];
+        for (let j = 0; j < current.length; j++)
+          next = next.concat(this.transition(current[j], str[i]));
+        current = next;
+      }
+
+      /* no states could be transitioned to, so 
+      terminate, returning the longest match so far */
+      if (current.length == 0) return max_accept;
+    }
+
+    return max_accept;
+  }
+
   /*  State Character -> List<State>
       Determine all states that can be reached from the given state
       by reading char off the input stream (includes literals/dots, but

@@ -3,7 +3,9 @@
 */
 
 const assert = require('assert');
+const NFAConstructor = require('../src/NFAConstructor.js');
 const { NFA, State } = require('../src/NFA.js');
+const { union, seq, star, char, dot, empty } = require('./globals.test.js');
 
 /*  Number List<Number> -> NFA
     Generate an empty (no transitions, etc) NFA with n
@@ -26,6 +28,54 @@ function empty_NFA(n, accept_idx) {
   // choose 0th state as start
   return new NFA(start, accepts, states);
 }
+
+describe('simulate', () => {
+  it('literal /abc/', () => {
+    const nfa = new NFAConstructor(seq(seq(char('a'), char('b')), char('c'))).construct();
+  
+    assert.equal(nfa.simulate("abcdefgh", 0), 3);
+    assert.equal(nfa.simulate("abcdef", 0), 3);
+    assert.equal(nfa.simulate("abc", 0), 3);
+    assert.equal(nfa.simulate("ab", 0), null);
+    assert.equal(nfa.simulate("a", 0), null);
+    assert.equal(nfa.simulate("", 0), null);
+
+    assert.equal(nfa.simulate("abcabcabc", 3), 6);
+    assert.equal(nfa.simulate("abcabcabc", 6), 9);
+    assert.equal(nfa.simulate("0000abc", 4), 7);
+    assert.equal(nfa.simulate("0000abc", 3), null);
+    assert.equal(nfa.simulate("abc", 3), null);
+  });
+
+  it('/(a|b)(c|d)xy/', () => {
+    const nfa = new NFAConstructor(
+      seq(seq(seq(
+        union(char('a'), char('b')), 
+        union(char('c'), char('d'))),
+        char('x')),
+        char('y'))).construct();
+    
+    assert.equal(nfa.simulate("acxy", 0), 4);
+    assert.equal(nfa.simulate("adxy", 0), 4);
+    assert.equal(nfa.simulate("xyxy", 0), null);
+    assert.equal(nfa.simulate("acxy0000", 0), 4);
+    assert.equal(nfa.simulate("ad3y", 0), null);
+    assert.equal(nfa.simulate("8cxy", 0), null);
+
+    assert.equal(nfa.simulate("000bdxy", 0), null);
+    assert.equal(nfa.simulate("000bdxy", 3), 7);
+    assert.equal(nfa.simulate("000bdxy", 4), null);
+  });
+
+  it('empty', () => {
+    const nfa = new NFAConstructor(empty()).construct();
+
+    assert.equal(nfa.simulate("", 0), 0);
+    assert.equal(nfa.simulate("test", 0), 0);
+    assert.equal(nfa.simulate("ABCDEFGHIJKL", 5), 5);
+  });
+
+});
 
 describe('transition', () => {
   it('follows transitions & dots', () => {

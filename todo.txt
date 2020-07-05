@@ -1,9 +1,5 @@
 To do.
 
-Regular expressions:
-  - match()
-  - replace()
-
 Create library of examples
 
 Documentation

@@ -47,4 +47,4 @@ This engine uses a recursive descent parser to parse input strings in the above 
 
 The expression's parse tree representation is then used to construct a nondeterministic finite automaton that recognizes the same language that the expression describes. This NFA is then simulated to implement the three main functions of the `RegularExpression` class.
 
-For a more detailed explanation, see [...]
+For a more detailed explanation, see [here](http://castleman.space/projects/regex/)
